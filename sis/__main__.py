@@ -210,4 +210,5 @@ def main():
         elif args.constituents in ['instructors', 'gsis']:
             uids = get_instructors(term_id, args.class_number,
                 args.constituents, credentials, args.exact)
-        for uid in uids: print(uid)
+        if uids:
+            for uid in uids: print(uid)
