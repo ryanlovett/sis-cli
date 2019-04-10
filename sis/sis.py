@@ -233,6 +233,10 @@ def section_catalog_number(section):
        e.g. "215B".'''
     return section['class']['course']['catalogNumber']['formatted']
 
+def section_display_name(section):
+    '''Given a section, return the displayName, e.g. "STAT 215B".'''
+    return section['class']['course']['displayName']
+
 def section_is_primary(section):
     return section['association']['primary']
 

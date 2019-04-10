@@ -175,6 +175,21 @@ def main():
     people_parser.add_argument('--exact', dest='exact', action='store_true',
         help='exclude data from sections with matching subject and code.')
 
+    section_parser = subparsers.add_parser('section',
+        help='Get information about a section.')
+    section_parser.add_argument('-y', dest='year', required=True,
+        help='course year, e.g. 2019')
+    section_parser.add_argument('-s', dest='semester', required=True,
+        choices=['spring', 'summer', 'fall'], type=str.lower,
+        help='semester')
+    section_parser.add_argument('-n', dest='class_number', required=True,
+        type=int, help='class section number, e.g. 14720')
+    section_parser.add_argument('-a', dest='attribute', required=True,
+        choices=[
+            'subject_area', 'catalog_number', 'display_name', 'is_primary'
+        ],
+        type=str.lower, help='semester')
+
     args = parser.parse_args()
     
     if args.verbose:
@@ -200,3 +215,20 @@ def main():
                 args.constituents, credentials, args.exact)
         if uids:
             for uid in uids: print(uid)
+    elif args.command == 'section':
+        term_id = sis.get_term_id_from_year_sem(
+            credentials['terms_id'], credentials['terms_key'],
+            args.year, args.semester
+        )
+        section = sis.get_section_by_id(
+            credentials['classes_id'], credentials['classes_key'],
+            term_id, args.class_number, include_secondary='false'
+        )
+        if args.attribute == 'subject_area':
+            print(sis.section_subject_area(section))
+        elif args.attribute == 'catalog_number':
+            print(sis.section_catalog_number(section))
+        elif args.attribute == 'display_name':
+            print(sis.section_display_name(section))
+        elif args.attribute == 'is_primary':
+            print({ True:'1', False:'0' }[sis.section_display_name(section)])
