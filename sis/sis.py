@@ -255,9 +255,3 @@ def enrollment_status(enrollment):
 
 def filter_enrollment_status(enrollments, status):
     return list(filter(lambda x: enrollment_status(x) == status, enrollments))
-
-def all_group_name(app_id, app_key, subject_area, catalog_number, sis_term_id):
-    '''Stat 243 Fall 2018'''
-    # friendly name for the term, e.g. 2019 Fall
-    sis_term_name = sis.get_term_name(app_id, app_key, sis_term_id)
-    return f'{subject_area}.capitalize() {catalog_number} {sis_term_name}'
