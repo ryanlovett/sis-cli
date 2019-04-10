@@ -30,7 +30,7 @@ Get waitlisted IDs for a lab section in summer 2019:
 Get all GSI IDs for a lecture in spring 2019. We omit `--exact` so that we match
 all sections with the same subject area and catalog number, e.g. STAT C8:
 
-`sis people -y 2019 -s spring -n 24996 -c gsis`
+`sis people -y 2019 -s spring -n 14035 -c gsis`
 
 Credentials
 -----------
