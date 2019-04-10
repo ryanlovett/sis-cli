@@ -73,16 +73,10 @@ def get_students(term_id, class_number, constituents, credentials, exact):
 
     else:
         # get the data for the specified section
-        sections = sis.get_section_by_id(
+        section = sis.get_section_by_id(
             credentials['classes_id'], credentials['classes_key'],
             term_id, class_number, include_secondary='true'
         )
-
-        # no match
-        if len(sections) == 0: return set()
-        
-        # there is only one section with a given term and section number
-        section = sections[0]
 
         # extract the subject area and catalog number, e.g. STAT C8
         subject_area   = sis.section_subject_area(section)
@@ -113,16 +107,10 @@ def get_instructors(term_id, class_number, constituents, credentials, exact):
     '''Given a term and class section number, return the instructor ids.'''
 
     # get the data for the specified section
-    sections = sis.get_section_by_id(
+    section = sis.get_section_by_id(
         credentials['classes_id'], credentials['classes_key'],
         term_id, class_number, include_secondary='true'
     )
-
-    # no match
-    if len(sections) == 0: return
-    
-    # there is only one section with a given term and section number
-    section = sections[0]
 
     if exact:
         uids = filter_instructors(section, constituents)

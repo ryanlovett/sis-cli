@@ -218,7 +218,11 @@ def get_section_by_id(app_id, app_key, term_id, class_section_id, include_second
     uri = f'{classes_sections_uri}/{class_section_id}'
     sections = get_items(uri, params, headers, 'classSections')
     
-    return sections
+    if len(sections) == 0:
+        return []
+    elif len(sections) > 1:
+        raise Exception(f"Ambiguous sections for {term_id} {class_section_id}")
+    return sections[0]
 
 def section_subject_area(section):
     '''Given a section, return the subject area, e.g. "STAT".'''
