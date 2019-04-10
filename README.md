@@ -5,6 +5,8 @@ instructor data.
 
 Requires SIS API credentials.
 
+People
+------
 ```
 usage: sis people [-h] -y YEAR -s {spring,summer,fall} -n CLASS_NUMBER
                   [-c {enrolled,waitlisted,instructors,gsis}] [--exact]
@@ -19,6 +21,22 @@ optional arguments:
                         course constituents
   --exact               exclude data from sections with matching subject and
                         code.
+```
+
+Sections
+--------
+```
+usage: sis section [-h] -y YEAR -s {spring,summer,fall} -n CLASS_NUMBER -a
+                   {subject_area,catalog_number,display_name,is_primary}
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -y YEAR               course year, e.g. 2019
+  -s {spring,summer,fall}
+                        semester
+  -n CLASS_NUMBER       class section number, e.g. 14720
+  -a {subject_area,catalog_number,display_name,is_primary}
+                        semester
 ```
 
 Example
