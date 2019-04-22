@@ -18,7 +18,7 @@ import logging
 import os
 import sys
 
-from sis import sis
+from sis import sis, student
 
 # We use f-strings from python >= 3.6.
 assert sys.version_info >= (3, 6)
@@ -29,8 +29,8 @@ logger = logging.getLogger('sis')
 #logger.setLevel(logging.DEBUG)
 
 secret_keys = [
-    'enrollments_id',  'classes_id',  'terms_id',
-    'enrollments_key', 'classes_key', 'terms_key',
+    'enrollments_id',  'classes_id',  'terms_id', 'students_id',
+    'enrollments_key', 'classes_key', 'terms_key', 'students_key',
 ]
 
 
@@ -185,10 +185,18 @@ def main():
     section_parser.add_argument('-n', dest='class_number', required=True,
         type=int, help='class section number, e.g. 14720')
     section_parser.add_argument('-a', dest='attribute', required=True,
-        choices=[
-            'subject_area', 'catalog_number', 'display_name', 'is_primary'
-        ],
-        type=str.lower, help='semester')
+        choices=['subject_area', 'catalog_number', 'display_name', 'is_primary'],
+        type=str.lower, help='attribute')
+
+    students_parser = subparsers.add_parser('student',
+        help='Get academic programs.')
+    students_parser.add_argument('-i', dest='identifier', required=True,
+        help='id of student')
+    students_parser.add_argument('-t', dest='id_type', metavar='type',
+        required=True, choices=['campus-id', 'student-id'], type=str.lower,
+        default='campus-id', help='id type')
+    students_parser.add_argument('-a', dest='attribute', required=True,
+        choices=[ 'plans' ], type=str.lower, help='attribute')
 
     args = parser.parse_args()
     
@@ -232,3 +240,13 @@ def main():
             print(sis.section_display_name(section))
         elif args.attribute == 'is_primary':
             print({ True:'1', False:'0' }[sis.section_display_name(section)])
+    elif args.command == 'student':
+        statuses = student.get_academic_statuses(
+            credentials['students_id'], credentials['students_key'],
+            args.identifier, args.id_type
+        )
+        if args.attribute == 'plans':
+            plans = []
+            for status in statuses:
+                plans += student.get_academic_plans(status)
+            for plan in plans: print(plan['code'])
