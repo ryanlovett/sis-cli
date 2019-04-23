@@ -43,7 +43,7 @@ Example
 -------
 Get waitlisted IDs for a lab section in summer 2019:
 
-`sis people -y 2019 -s summer -n 26849 -c waitlisted --exact`
+`sis people -y 2019 -s summer -n 14024 -c waitlisted --exact`
 
 Get all GSI IDs for a lecture in spring 2019. We omit `--exact` so that we match
 all sections with the same subject area and catalog number, e.g. STAT C8:
