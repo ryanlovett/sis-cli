@@ -62,7 +62,9 @@ JSON file of the form:
 	"classes_key": "...",
 	"terms_id": "...",
 	"terms_key": "...",
+	"students_id": "...",
+	"students_key": "..."
 }
 ```
-Request credentials for the SIS Enrollments, Classes, and Terms APIs through
+Request credentials for the SIS Enrollments, Classes, Terms, and Student APIs through
 [API Central](https://api-central.berkeley.edu).
