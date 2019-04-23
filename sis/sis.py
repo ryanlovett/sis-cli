@@ -2,7 +2,7 @@
 import logging
 import sys
 
-import requests
+import aiohttp
 
 # logging
 logging.basicConfig(stream=sys.stdout, level=logging.WARNING)
@@ -26,26 +26,29 @@ def filter_lectures(sections, relevant_codes=section_codes):
     '''
     codes = []
     for section in sections:
+        if 'description' not in section: continue
         desc_words = set(section['description'].split())
         if len(set(desc_words) & set(relevant_codes)) > 0:
             codes.append(section['code'])
     return codes
 
-def get_items(uri, params, headers, item_type):
+async def get_items(uri, params, headers, item_type):
     '''Recursively get a list of items (enrollments, ) from the SIS.'''
     logger.info(f"getting {item_type}")
-    r = requests.get(uri, params=params, headers=headers)
-    if r.status_code == 404:
-        return []
-    data = r.json()
+    data = []
+    async with aiohttp.ClientSession() as session:
+        async with session.get(uri, headers=headers, params=params) as r:
+            if r.status == 404:
+                return []
+            data = await r.json()
     # Return if there is no response (e.g. 404)
-    if 'response' not in data['apiResponse']:
+    if 'apiResponse' not in data or 'response' not in data['apiResponse']:
         logger.debug('404 No response')
-        return[]
+        return data
     # Return if the UID has no items
     elif item_type not in data['apiResponse']['response']:
         logger.debug(f'No {item_type}')
-        return []
+        return data
     # Get this page's items
     items = data['apiResponse']['response'][item_type]
     # If we are not paginated, just return the items
@@ -53,22 +56,22 @@ def get_items(uri, params, headers, item_type):
         return items
     # Get the next page's items
     params['page-number'] += 1
-    items += get_items(uri, params, headers, item_type)
+    items += await get_items(uri, params, headers, item_type)
     num = len(items)
     logger.debug(f'There are {num} items of type {item_type}')
     return items
 
-def get_term_name(app_id, app_key, term_id):
+async def get_term_name(app_id, app_key, term_id):
     '''Given a term id, return the term's friendly name.'''
     headers = {
         "Accept": "application/json",
         "app_id": app_id, "app_key": app_key
     }
     uri = f'{terms_uri}/{term_id}'
-    terms = get_items(uri, params, headers, 'terms')
+    terms = await get_items(uri, params, headers, 'terms')
     return terms[0]['name']
 
-def get_term_id(app_id, app_key, position='Current'):
+async def get_term_id(app_id, app_key, position='Current'):
     '''Given a temporal position of Current, Previous, or Next, return
        the corresponding term's ID.'''
     headers = {
@@ -77,10 +80,10 @@ def get_term_id(app_id, app_key, position='Current'):
     }
     params = { "temporal-position": position }
     uri = terms_uri
-    terms = get_items(uri, params, headers, 'terms')
+    terms = await get_items(uri, params, headers, 'terms')
     return terms[0]['id']
 
-def get_term_id_from_year_sem(app_id, app_key, year, semester):
+async def get_term_id_from_year_sem(app_id, app_key, year, semester):
     '''Given a year and Berkeley semester, return the corresponding
        term's ID.'''
     headers = {
@@ -97,17 +100,17 @@ def get_term_id_from_year_sem(app_id, app_key, year, semester):
         raise Exception(f"No such semester: {semester}")
     params = { "as-of-date": f"{year}-{mm_dd}" }
     uri = terms_uri
-    terms = get_items(uri, params, headers, 'terms')
+    terms = await get_items(uri, params, headers, 'terms')
     return terms[0]['id']
 
-def normalize_term_id(app_id, app_key, term_id):
+async def normalize_term_id(app_id, app_key, term_id):
     '''Convert temporal position (current, next, previous) to a numeric term id,
        or passthrough a numeric term id.'''
     if term_id.isalpha():
-        term_id = get_term_id(app_id, app_key, term_id)
+        term_id = await get_term_id(app_id, app_key, term_id)
     return term_id
 
-def get_lecture_section_ids(app_id, app_key, term_id, subject_area, catalog_number):
+async def get_lecture_section_ids(app_id, app_key, term_id, subject_area, catalog_number):
     '''
       Given a term, subject, and course number, return the lecture section ids.
       We only care about the lecture enrollments since they contain a superset
@@ -126,25 +129,25 @@ def get_lecture_section_ids(app_id, app_key, term_id, subject_area, catalog_numb
     # Retrieve the sections associated with the course which includes
     # both lecture and sections.
     uri = descriptors_uri.format(term_id)
-    sections = get_items(uri, params, headers, 'fieldValues')
+    sections = await get_items(uri, params, headers, 'fieldValues')
     return filter_lectures(sections)
 
-def get_enrollments(app_id, app_key, term_id, subject_area, catalog_number):
+async def get_enrollments(app_id, app_key, term_id, subject_area, catalog_number):
     '''Gets a course's enrollments from the SIS.'''
     logger.info(f"get_enrollments: {subject_area} {catalog_number}")
 
     # get the lectures
-    lecture_codes = get_lecture_section_ids(app_id, app_key, term_id,
+    lecture_codes = await get_lecture_section_ids(app_id, app_key, term_id,
                         subject_area, catalog_number)
 
     # get the enrollments in each lecture
     enrollments = []
     for section_id in lecture_codes:
-        enrollments += get_section_enrollments(app_id, app_key, term_id, section_id)
+        enrollments += await get_section_enrollments(app_id, app_key, term_id, section_id)
     logger.info(f'enrollments: {len(enrollments)}')
     return enrollments
 
-def get_section_enrollments(app_id, app_key, term_id, section_id):
+async def get_section_enrollments(app_id, app_key, term_id, section_id):
     '''Gets a course section's enrollments from the SIS.'''
     headers = {
         "Accept": "application/json",
@@ -156,7 +159,7 @@ def get_section_enrollments(app_id, app_key, term_id, section_id):
         "page-size": 100, # maximum
     }
     uri = sections_uri.format(term_id, section_id)
-    enrollments = get_items(uri, params, headers, 'classSectionEnrollments')
+    enrollments = await get_items(uri, params, headers, 'classSectionEnrollments')
     logger.info(f"{section_id}: {len(enrollments)}")
     return enrollments
 
@@ -179,7 +182,7 @@ def section_instructors(section):
                 uids.add(identifier['id'])
     return uids
 
-def get_sections(c_id, c_key, term_id, subject_area, catalog_number):
+async def get_sections(c_id, c_key, term_id, subject_area, catalog_number):
     '''Given a term, subject, and SIS catalog number, returns a list of
        instructors and a list of GSIs.'''
     logger.info(f'{term_id} {subject_area} {catalog_number}')
@@ -197,11 +200,11 @@ def get_sections(c_id, c_key, term_id, subject_area, catalog_number):
     logger.debug(f'{classes_sections_uri}')
     logger.debug(f'{params}')
     logger.debug(f'{headers}')
-    sections = get_items(classes_sections_uri, params, headers, 'classSections')
+    sections = await get_items(classes_sections_uri, params, headers, 'classSections')
     return sections
 
 
-def get_section_by_id(app_id, app_key, term_id, class_section_id, include_secondary='true'):
+async def get_section_by_id(app_id, app_key, term_id, class_section_id, include_secondary='true'):
     '''Given a term and class section ID, return section data.'''
     headers = {
         "Accept": "application/json",
@@ -216,7 +219,7 @@ def get_section_by_id(app_id, app_key, term_id, class_section_id, include_second
         "page-number": 1
     }
     uri = f'{classes_sections_uri}/{class_section_id}'
-    sections = get_items(uri, params, headers, 'classSections')
+    sections = await get_items(uri, params, headers, 'classSections')
     
     if len(sections) == 0:
         return []
@@ -226,6 +229,7 @@ def get_section_by_id(app_id, app_key, term_id, class_section_id, include_second
 
 def section_subject_area(section):
     '''Given a section, return the subject area, e.g. "STAT".'''
+    assert 'class' in section
     return section['class']['course']['subjectArea']['code']
 
 def section_catalog_number(section):

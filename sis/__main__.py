@@ -13,6 +13,7 @@
 # https://calnetweb.berkeley.edu/calnet-technologists/calgroups-integration/calgroups-api-information
 
 import argparse
+import asyncio
 import json
 import logging
 import os
@@ -61,19 +62,19 @@ def filter_instructors(section, constituents):
         logger.info(f"exact: uids {uids}")
     return set()
 
-def get_students(term_id, class_number, constituents, credentials, exact):
+async def get_students(term_id, class_number, constituents, credentials, exact):
     '''Given a term and class section number, return the student ids.'''
 
     if exact:
         # get all enrollments for this section
-        enrollments = sis.get_section_enrollments(
+        enrollments = await sis.get_section_enrollments(
             credentials['enrollments_id'], credentials['enrollments_key'],
             term_id, class_number
         )
 
     else:
         # get the data for the specified section
-        section = sis.get_section_by_id(
+        section = await sis.get_section_by_id(
             credentials['classes_id'], credentials['classes_key'],
             term_id, class_number, include_secondary='true'
         )
@@ -84,7 +85,7 @@ def get_students(term_id, class_number, constituents, credentials, exact):
         logger.info(f"{subject_area} {catalog_number}")
 
         # get enrollments in all matching sections
-        enrollments = sis.get_enrollments(
+        enrollments = await sis.get_enrollments(
             credentials['enrollments_id'], credentials['enrollments_key'],
             term_id, subject_area, catalog_number
         )
@@ -103,11 +104,11 @@ def get_students(term_id, class_number, constituents, credentials, exact):
     # lectures and labs (if not exact)
     return set(uids)
 
-def get_instructors(term_id, class_number, constituents, credentials, exact):
+async def get_instructors(term_id, class_number, constituents, credentials, exact):
     '''Given a term and class section number, return the instructor ids.'''
 
     # get the data for the specified section
-    section = sis.get_section_by_id(
+    section = await sis.get_section_by_id(
         credentials['classes_id'], credentials['classes_key'],
         term_id, class_number, include_secondary='true'
     )
@@ -122,7 +123,7 @@ def get_instructors(term_id, class_number, constituents, credentials, exact):
 
         # we search by subject area and catalog number which will return
         # all lectures, labs, discussions, etc.
-        all_sections = sis.get_sections(
+        all_sections = await sis.get_sections(
             credentials['classes_id'], credentials['classes_key'],
             term_id, subject_area, catalog_number
         )
@@ -145,7 +146,7 @@ def csv_list(string):
    return string.split(',')
 
 ## main
-def main():
+async def main():
     parser = argparse.ArgumentParser(
         description="Get data from UC Berkeley's SIS")
     parser.add_argument('-f', dest='credentials', default='sis.json',
@@ -210,25 +211,25 @@ def main():
     
     if args.command == 'people':
         # determine the numeric term id (e.g. 2192) from the year and semester
-        term_id = sis.get_term_id_from_year_sem(
+        term_id = await sis.get_term_id_from_year_sem(
             credentials['terms_id'], credentials['terms_key'],
             args.year, args.semester
         )
 
         if args.constituents in ['enrolled', 'waitlisted']:
-            uids = get_students(term_id, args.class_number,
+            uids = await get_students(term_id, args.class_number,
                 args.constituents, credentials, args.exact)
         elif args.constituents in ['instructors', 'gsis']:
-            uids = get_instructors(term_id, args.class_number,
+            uids = await get_instructors(term_id, args.class_number,
                 args.constituents, credentials, args.exact)
         if uids:
             for uid in uids: print(uid)
     elif args.command == 'section':
-        term_id = sis.get_term_id_from_year_sem(
+        term_id = await sis.get_term_id_from_year_sem(
             credentials['terms_id'], credentials['terms_key'],
             args.year, args.semester
         )
-        section = sis.get_section_by_id(
+        section = await sis.get_section_by_id(
             credentials['classes_id'], credentials['classes_key'],
             term_id, args.class_number, include_secondary='false'
         )
@@ -241,7 +242,7 @@ def main():
         elif args.attribute == 'is_primary':
             print({ True:'1', False:'0' }[sis.section_display_name(section)])
     elif args.command == 'student':
-        statuses = student.get_academic_statuses(
+        statuses = await student.get_academic_statuses(
             credentials['students_id'], credentials['students_key'],
             args.identifier, args.id_type
         )
@@ -250,3 +251,6 @@ def main():
             for status in statuses:
                 plans += student.get_academic_plans(status)
             for plan in plans: print(plan['code'])
+
+def run():
+    asyncio.run(main())
