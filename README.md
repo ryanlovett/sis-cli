@@ -1,15 +1,17 @@
 sis
 ===
-Query the UC Berkeley Student Information System (SIS) for enrollment and
-instructor data.
+Query the UC Berkeley Student Information System (SIS).
 
 Requires SIS API credentials.
+
+Please submit issues to this repository since this software is not maintained by the SIS team.
 
 People
 ------
 ```
 usage: sis people [-h] -y YEAR -s {spring,summer,fall} -n CLASS_NUMBER
-                  [-c {enrolled,waitlisted,instructors,gsis}] [--exact]
+                  [-c {enrolled,waitlisted,students,instructors}]
+                  [-i {campus-uid,email}] [--exact]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -17,7 +19,9 @@ optional arguments:
   -s {spring,summer,fall}
                         semester
   -n CLASS_NUMBER       class section number, e.g. 14720
-  -c {enrolled,waitlisted,instructors,gsis}
+  -c {enrolled,waitlisted,students,instructors}
+                        course constituents
+  -i {campus-uid,email}
                         course constituents
   --exact               exclude data from sections with matching subject and
                         code.
@@ -36,7 +40,19 @@ optional arguments:
                         semester
   -n CLASS_NUMBER       class section number, e.g. 14720
   -a {subject_area,catalog_number,display_name,is_primary}
-                        semester
+                        attribute
+```
+
+Students
+--------
+```
+usage: sis student [-h] -i IDENTIFIER -t type -a {plans}
+
+optional arguments:
+  -h, --help     show this help message and exit
+  -i IDENTIFIER  id of student
+  -t type        id type
+  -a {plans}     attribute
 ```
 
 Example
@@ -45,26 +61,39 @@ Get waitlisted IDs for a lab section in summer 2019:
 
 `sis people -y 2019 -s summer -n 14024 -c waitlisted --exact`
 
-Get all GSI IDs for a lecture in spring 2019. We omit `--exact` so that we match
-all sections with the same subject area and catalog number, e.g. STAT C8:
+Get all student emails for a lecture in summer 2019. We omit `--exact` so that
+we match all sections with the same subject area and catalog number,
+e.g. STAT C8:
 
-`sis people -y 2019 -s spring -n 14035 -c gsis`
+`sis people -y 2019 -s summer -n 14035 -c students -i email`
 
-Credentials
------------
-sis authenticates to various SIS endpoints. Supply the credentials in a
-JSON file of the form:
+API Access
+----------
+This application requires access to the following SIS APIs:
+
+ - Enrollments: acquire course enrollments
+ - Classes:
+   - lookup course instructor
+   - resolve course subject and number from section ID
+ - Terms: lookup term id from date
+ - Student: get student's academic programs
+ - Employee: resolve instructor campus email from campus uid
+
+Request credentials for these APIs through
+[API Central](https://api-central.berkeley.edu).
+
+Supply the credentials in a JSON file of the form:
 ```
 {
-	"enrollments_id": "...",
-	"enrollments_key": "...",
 	"classes_id": "...",
 	"classes_key": "...",
-	"terms_id": "...",
-	"terms_key": "...",
+	"employee_id": "...",
+	"employee_key": "...",
+	"enrollments_id": "...",
+	"enrollments_key": "...",
 	"students_id": "...",
-	"students_key": "..."
+	"students_key": "...",
+	"terms_id": "...",
+	"terms_key": "..."
 }
 ```
-Request credentials for the SIS Enrollments, Classes, Terms, and Student APIs through
-[API Central](https://api-central.berkeley.edu).
