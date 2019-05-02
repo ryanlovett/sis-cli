@@ -15,7 +15,6 @@ async def get_items(url, params, headers, item_type):
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers, params=params) as r:
             if r.status == 404:
-                logger.warning("http 404")
                 return data # api returns 404 at end of pagination
             elif r.status in [401]:
                 retval = {
