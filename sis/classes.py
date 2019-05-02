@@ -93,6 +93,8 @@ def section_instructors(section, id_attr='campus-uid'):
     '''Extract disclosed identifiers of section instructors.'''
     # search for disclosed identifiers of type {id_attr}
     ids = jmespath.search(f"meetings[].assignedInstructors[].instructor.identifiers[?disclose && type=='{id_attr}'].id[]", section)
+    if ids is None:
+        return set()
     return set(ids)
 
 def filter_instructors(section, constituents, identifier):
