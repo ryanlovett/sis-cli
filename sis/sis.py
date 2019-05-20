@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 async def get_items(url, params, headers, item_type):
     '''Recursively get a list of items (enrollments, ) from the SIS.'''
-    logger.info(f"getting {item_type}")
+    logger.info(f"get_items: getting {item_type}")
     data = []
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers, params=params) as r:
@@ -35,12 +35,13 @@ async def get_items(url, params, headers, item_type):
                 raise
     # Return if there is no response (e.g. 404)
     if 'apiResponse' not in data or 'response' not in data['apiResponse']:
-        logger.debug('404 No response')
-        return data
+        logger.debug('get_items: apiResponse not in data or response not in apiResponse')
+        logger.debug(f'get_items: returning: {data}')
+        return []
     # Return if the UID has no items
     elif item_type not in data['apiResponse']['response']:
-        logger.debug(f'No {item_type}')
-        return data
+        logger.debug(f'get_items: No {item_type} in response')
+        return []
     # Get this page's items
     items = data['apiResponse']['response'][item_type]
     # If we are not paginated, just return the items
