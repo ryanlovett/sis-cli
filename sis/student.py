@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 # Various SIS endpoints
 students_url = "https://apis.berkeley.edu/sis/v2/students"
 
-def get_academic_statuses(app_id, app_key, identifier, id_type):
+async def get_academic_statuses(app_id, app_key, identifier, id_type):
     '''Given a term and class section ID, return section data.'''
     uri = f'{students_url}/{identifier}'
     item_key = 'academicStatuses'
@@ -30,10 +30,13 @@ def get_academic_statuses(app_id, app_key, identifier, id_type):
         "affiliation-status": "ACT", "inc-completed-programs": "true",
     }
     logger.debug(f"status for {identifier}")
-    items = sis.get_items(uri, params, headers, item_key)
+    items = await sis.get_items(uri, params, headers, item_key)
+    logger.debug(f"items: {items}")
     
     return items
 
 def get_academic_plans(status):
+    logger.debug(f"status: {status}")
     plans = status.get('studentPlans', [])
+    logger.debug(f"plans: {plans}")
     return list(map(lambda x: x['academicPlan']['plan'], plans))
