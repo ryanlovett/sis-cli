@@ -121,6 +121,14 @@ async def main():
     students_parser.add_argument('-a', dest='attribute', required=True,
         choices=[ 'plans' ], type=str.lower, help='attribute')
 
+    term_parser = subparsers.add_parser('term',
+        help='Get term identifier.')
+    term_parser.add_argument('-y', dest='year', required=True,
+        help='term year, e.g. 2019')
+    term_parser.add_argument('-s', dest='semester', required=True,
+        choices=['spring', 'summer', 'fall'], type=str.lower,
+        help='semester')
+
     args = parser.parse_args()
     
     if args.verbose:
@@ -175,6 +183,13 @@ async def main():
             for status in statuses:
                 plans += student.get_academic_plans(status)
             for plan in plans: print(plan['code'])
+    elif args.command == 'term':
+        # determine the numeric term id (e.g. 2192) from the year and semester
+        term_id = await terms.get_term_id_from_year_sem(
+            credentials['terms_id'], credentials['terms_key'],
+            args.year, args.semester
+        )
+        print(term_id)
 
 def run():
     asyncio.run(main())
