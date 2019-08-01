@@ -38,7 +38,7 @@ async def get_section_by_id(app_id, app_key, term_id, class_section_id, include_
     return sections[0]
 
 
-async def get_sections(app_id, app_key, term_id, subject_area, catalog_number):
+async def get_sections(app_id, app_key, term_id, subject_area, catalog_number, include_secondary='true'):
     '''Given a term, subject, and SIS catalog number, returns a list of
        instructors and a list of GSIs.'''
     logger.info(f'{term_id} {subject_area} {catalog_number}')
@@ -47,12 +47,13 @@ async def get_sections(app_id, app_key, term_id, subject_area, catalog_number):
         "subject-area-code": subject_area.upper(),
         "catalog-number": catalog_number.upper(),
         "term-id": term_id,
+        "include-secondary": include_secondary,
         "page-size": 400,
         "page-number": 1
     }
 
     # Retrieve the sections associated with the course which includes
-    # both lecture and sections.
+    # both lecture and sections. (because of include_secondary)
     logger.debug(f'{classes_sections_uri}')
     logger.debug(f'{params}')
     logger.debug(f'{headers}')
