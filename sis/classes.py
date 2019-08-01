@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 # SIS endpoint
 classes_sections_uri = "https://apis.berkeley.edu/sis/v1/classes/sections"
 
-async def get_section_by_id(app_id, app_key, term_id, class_section_id, include_secondary='true'):
+async def get_sections_by_id(app_id, app_key, term_id, class_section_id, include_secondary='true'):
     '''Given a term and class section ID, return section data.'''
     headers = {
         "Accept": "application/json",
@@ -28,19 +28,19 @@ async def get_section_by_id(app_id, app_key, term_id, class_section_id, include_
         #"page-number": 1
     }
     uri = f'{classes_sections_uri}/{class_section_id}'
-    logger.debug(f"get_section_by_id: {uri} {params}")
+    logger.debug(f"get_sections_by_id: {uri} {params}")
     sections = await sis.get_items(uri, params, headers, 'classSections')
 
     if len(sections) == 0:
         return []
-    elif len(sections) > 1:
+    elif len(sections) > 1 and include_secondary == 'false':
         logger.warning(f"Multiple sections for {term_id} {class_section_id}")
-    return sections[0]
+    return sections
 
 
 async def get_sections(app_id, app_key, term_id, subject_area, catalog_number, include_secondary='true'):
     '''Given a term, subject, and SIS catalog number, returns a list of
-       instructors and a list of GSIs.'''
+       sections.'''
     logger.info(f'{term_id} {subject_area} {catalog_number}')
     headers = { "Accept": "application/json", "app_id": app_id, "app_key": app_key }
     params = {
@@ -54,40 +54,36 @@ async def get_sections(app_id, app_key, term_id, subject_area, catalog_number, i
 
     # Retrieve the sections associated with the course which includes
     # both lecture and sections. (because of include_secondary)
-    logger.debug(f'{classes_sections_uri}')
-    logger.debug(f'{params}')
-    logger.debug(f'{headers}')
-    sections = await sis.get_items(classes_sections_uri, params, headers, 'classSections')
+    sections = await sis.get_items(
+        classes_sections_uri, params, headers, 'classSections'
+    )
     return sections
 
-async def get_instructors(app_id, app_key, term_id, class_number, exact, identifier='campus-uid'):
+async def get_instructors(app_id, app_key, term_id, class_number, include_secondary='false', identifier='campus-uid'):
     '''Given a term and class section number, return the instructor ids.'''
 
-    # get the data for the specified section
-    section = await classes.get_section_by_id(
-        app_id, app_key, term_id, class_number, include_secondary='false'
+    # get the data for the specified sections
+    sections = await classes.get_sections_by_id(
+        app_id, app_key, term_id, class_number, include_secondary
     )
-    logger.debug(f"section: {section}")
+    logger.debug(f"sections: {sections}")
 
-    if exact:
-        instructors = section_instructors(section, identifier)
-    else:
-        # e.g. STAT C8
-        subject_area   = enrollments.section_subject_area(section)
-        catalog_number = enrollments.section_catalog_number(section)
-        logger.info(f"{subject_area} {catalog_number}")
+    # When the include_secondary attribute was not functional in SIS we had
+    # to search for all sections with a subject area and catalog number,
+    # e.g. STAT C8. This would return all lectures, labs, discussions, etc.
+    # We'd then get the instructors for all of those sections.
+    #subject_area   = enrollments.section_subject_area(section)
+    #catalog_number = enrollments.section_catalog_number(section)
+    #logger.info(f"{subject_area} {catalog_number}")
+    #sections = await classes.get_sections(
+    #    app_id, app_key, term_id, subject_area, catalog_number
+    #)
 
-        # we search by subject area and catalog number which will return
-        # all lectures, labs, discussions, etc.
-        all_sections = await classes.get_sections(
-            app_id, app_key, term_id, subject_area, catalog_number
-        )
-        logger.info(f"num sections: {len(all_sections)}")
+    logger.info(f"num sections: {len(sections)}")
+    instructors = set()
+    for section in sections:
+        instructors |= section_instructors(section, identifier)
 
-        instructors = set()
-        for section in all_sections:
-            # fetch the uids of this section's instructors
-            instructors |= section_instructors(section, identifier)
     return instructors
 
 def section_instructors(section, id_attr='campus-uid'):
