@@ -34,7 +34,7 @@ async def get_section_by_id(app_id, app_key, term_id, class_section_id, include_
     if len(sections) == 0:
         return []
     elif len(sections) > 1:
-        raise Exception(f"Ambiguous sections for {term_id} {class_section_id}")
+        logger.warning(f"Multiple sections for {term_id} {class_section_id}")
     return sections[0]
 
 
@@ -64,7 +64,7 @@ async def get_instructors(app_id, app_key, term_id, class_number, exact, identif
 
     # get the data for the specified section
     section = await classes.get_section_by_id(
-        app_id, app_key, term_id, class_number, include_secondary='true'
+        app_id, app_key, term_id, class_number, include_secondary='false'
     )
     logger.debug(f"section: {section}")
 
