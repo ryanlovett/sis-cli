@@ -32,6 +32,10 @@ async def get_section_enrollments(app_id, app_key, term_id, section_id):
     logger.info(f"{section_id}: {len(enrollments)}")
     return enrollments
 
+def section_id(section):
+    '''Return a section's course ID, e.g. "15807".'''
+    return section['id']
+
 def section_subject_area(section):
     '''Return a section's subject area, e.g. "STAT".'''
     return jmespath.search('class.course.subjectArea.code', section)
