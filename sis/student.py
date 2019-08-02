@@ -44,7 +44,7 @@ def get_academic_plans(status):
     return list(map(lambda x: x['academicPlan']['plan'], plans))
 
 async def get_emails(app_id, app_key, identifier, id_type='campus-id'):
-    '''Given a term and class section ID, return section data.'''
+    '''Given a identifier, return the student's email address.'''
     uri = f'{students_url}/{identifier}'
     item_key = 'emails'
 
@@ -62,5 +62,5 @@ async def get_emails(app_id, app_key, identifier, id_type='campus-id'):
     logger.debug(f"items: {items}")
 
     # return disclosed campus emails
-    expr = "[?disclose && type.code=='CAMP'].emailAddress | [0]"
+    expr = "[?disclose && type.code=='CAMP'].emailAddress"
     return jmespath.search(expr, items)
