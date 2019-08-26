@@ -162,7 +162,7 @@ async def main():
             credentials['terms_id'], credentials['terms_key'],
             args.year, args.semester
         )
-        section = await classes.get_section_by_id(
+        section = await classes.get_sections_by_id(
             credentials['classes_id'], credentials['classes_key'],
             term_id, args.class_number, include_secondary='false'
         )

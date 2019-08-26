@@ -96,7 +96,7 @@ async def get_students(term_id, class_number, constituents, credentials, exact, 
 
     else:
         # get the data for the specified section
-        section = await classes.get_section_by_id(
+        section = await classes.get_sections_by_id(
             credentials['classes_id'], credentials['classes_key'],
             term_id, class_number, include_secondary='true'
         )
