@@ -146,14 +146,15 @@ async def main():
             args.year, args.semester
         )
 
+        include_secondary = 'false' if args.exact else 'true'
         if args.constituents in ['enrolled', 'waitlisted', 'students']:
             uids = await enrollments.get_students(term_id, args.class_number,
-                args.constituents, credentials, args.exact, args.identifier)
+                args.constituents, credentials, include_secondary, args.identifier)
         elif args.constituents == 'instructors':
             uids = await classes.get_instructors(
                 credentials['classes_id'], credentials['classes_key'],
                 term_id, args.class_number,
-                args.exact, args.identifier)
+                include_secondary, args.identifier)
         if uids:
             for uid in uids: print(uid)
     elif args.command == 'section':
