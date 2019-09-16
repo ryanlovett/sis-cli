@@ -16,8 +16,28 @@ enrollments_uri = "https://apis.berkeley.edu/sis/v2/enrollments"
 # apparently some courses have LAB without LEC (?)
 section_codes = ['LEC', 'SES', 'WBL', 'LAB']
 
+async def get_student_enrollments(app_id, app_key, identifier, term_id,
+    id_type='campus-uid', enrolled_only='true', primary_only='false'):
+    '''Gets a students enrollments.'''
+    uri = enrollments_uri + f"/students/{identifier}"
+    headers = {
+        "Accept": "application/json",
+        "app_id": app_id,
+        "app_key": app_key
+    }
+    params = {
+        "page-number": 1,
+        "page-size": 100, # maximum
+        "id-type": id_type,
+        "term-id": term_id,
+        "enrolled-only": enrolled_only,
+        "primary-only": primary_only,
+    }
+    student = await sis.get_items(uri, params, headers, 'student')
+    return jmespath.search("classSection", student)
+
 async def get_section_enrollments(app_id, app_key, term_id, section_id):
-    '''Gets a course section's enrollments from the SIS.'''
+    '''Gets a course section's enrollments.'''
     uri = enrollments_uri + f"/terms/{term_id}/classes/sections/{section_id}"
     headers = {
         "Accept": "application/json",

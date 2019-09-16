@@ -162,10 +162,13 @@ async def main():
             credentials['terms_id'], credentials['terms_key'],
             args.year, args.semester
         )
-        section = await classes.get_sections_by_id(
+        sections = await classes.get_sections_by_id(
             credentials['classes_id'], credentials['classes_key'],
             term_id, args.class_number, include_secondary='false'
         )
+        if len(sections) != 1:
+            raise Exception(f"Unexpected number of sections: {len(sections)}")
+        section = sections[0]
         if args.attribute == 'subject_area':
             print(enrollments.section_subject_area(section))
         elif args.attribute == 'catalog_number':
