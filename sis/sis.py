@@ -38,6 +38,9 @@ async def get_items(url, params, headers, item_type):
         logger.debug('get_items: apiResponse not in data or response not in apiResponse')
         logger.debug(f'get_items: returning: {data}')
         return []
+    # Return the whole response if no item_type is specified
+    elif item_type in [None, '']:
+        return data['apiResponse']['response']
     # Return if the UID has no items
     elif item_type not in data['apiResponse']['response']:
         logger.debug(f'get_items: No {item_type} in response')
@@ -46,6 +49,7 @@ async def get_items(url, params, headers, item_type):
     items = data['apiResponse']['response'][item_type]
     # If we are not paginated, just return the items
     if 'page-number' not in params:
+        logger.debug('no other pages')
         return items
     # Get the next page's items
     params['page-number'] += 1
