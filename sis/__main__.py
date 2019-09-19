@@ -119,7 +119,7 @@ async def main():
         required=True, choices=['campus-id', 'student-id'], type=str.lower,
         default='campus-id', help='id type')
     students_parser.add_argument('-a', dest='attribute', required=True,
-        choices=[ 'plans' ], type=str.lower, help='attribute')
+        choices=[ 'plans', 'email' ], type=str.lower, help='attribute')
 
     courses_parser = subparsers.add_parser('courses',
         help='Get student courses.')
@@ -203,6 +203,12 @@ async def main():
             for status in statuses:
                 plans += student.get_academic_plans(status)
             for plan in plans: print(plan['code'])
+        elif args.attribute == 'email':
+            emails = await student.get_emails(
+                credentials['students_id'], credentials['students_key'],
+                args.identifier, args.id_type
+            )
+            for email in emails: print(email)
     elif args.command == 'courses':
         term_id = await terms.get_term_id_from_year_sem(
             credentials['terms_id'], credentials['terms_key'],

@@ -52,7 +52,7 @@ optional arguments:
   -h, --help     show this help message and exit
   -i IDENTIFIER  id of student
   -t type        id type
-  -a {plans}     attribute
+  -a {plans,email}     attribute
 ```
 
 Courses
@@ -97,7 +97,7 @@ This application requires access to the following SIS APIs:
    - lookup course instructor
    - resolve course subject and number from section ID
  - Terms: lookup term id from date
- - Student: get student's academic programs
+ - Student: get student's academic programs or email
  - Employee: resolve instructor campus email from campus uid
 
 Request credentials for these APIs through
