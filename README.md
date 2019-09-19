@@ -55,8 +55,25 @@ optional arguments:
   -a {plans}     attribute
 ```
 
-Example
+Courses
 -------
+```
+usage: sis courses [-h] -i IDENTIFIER -t type -y YEAR -s {spring,summer,fall}
+                   [-a {course-id,display-name}]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i IDENTIFIER         id of student
+  -t type               id type
+  -y YEAR               term year, e.g. 2019
+  -s {spring,summer,fall}
+                        semester
+  -a {course-id,display-name}
+                        course descriptor
+```
+
+Examples
+--------
 Get waitlisted IDs for a lab section in summer 2019:
 
 `sis people -y 2019 -s summer -n 14024 -c waitlisted --exact`
@@ -66,6 +83,10 @@ we match all sections with the same subject area and catalog number,
 e.g. STAT C8:
 
 `sis people -y 2019 -s summer -n 14035 -c students -i email`
+
+Get a student's courses in fall 2019:
+
+`sis courses -i 123456 -t campus-uid -y 2019 -s fall`
 
 API Access
 ----------
