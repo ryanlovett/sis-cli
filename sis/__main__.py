@@ -121,6 +121,22 @@ async def main():
     students_parser.add_argument('-a', dest='attribute', required=True,
         choices=[ 'plans' ], type=str.lower, help='attribute')
 
+    courses_parser = subparsers.add_parser('courses',
+        help='Get student courses.')
+    courses_parser.add_argument('-i', dest='identifier', required=True,
+        help='id of student')
+    courses_parser.add_argument('-t', dest='id_type', metavar='type',
+        required=True, choices=['campus-uid', 'student-id'], type=str.lower,
+        default='campus-uid', help='id type')
+    courses_parser.add_argument('-y', dest='year', required=True,
+        help='term year, e.g. 2019')
+    courses_parser.add_argument('-s', dest='semester', required=True,
+        choices=['spring', 'summer', 'fall'], type=str.lower,
+        help='semester')
+    courses_parser.add_argument('-a', dest='attribute', required=False,
+        choices=['course-id', 'display-name'], type=str.lower,
+        default='course-id', help='course descriptor')
+
     term_parser = subparsers.add_parser('term',
         help='Get term identifier.')
     term_parser.add_argument('-y', dest='year', required=True,
@@ -178,15 +194,26 @@ async def main():
         elif args.attribute == 'is_primary':
             print({ True:'1', False:'0' }[enrollments.section_display_name(section)])
     elif args.command == 'student':
-        statuses = await student.get_academic_statuses(
-            credentials['students_id'], credentials['students_key'],
-            args.identifier, args.id_type
-        )
         if args.attribute == 'plans':
+            statuses = await student.get_academic_statuses(
+                credentials['students_id'], credentials['students_key'],
+                args.identifier, args.id_type
+            )
             plans = []
             for status in statuses:
                 plans += student.get_academic_plans(status)
             for plan in plans: print(plan['code'])
+    elif args.command == 'courses':
+        term_id = await terms.get_term_id_from_year_sem(
+            credentials['terms_id'], credentials['terms_key'],
+            args.year, args.semester
+        )
+        class_sections = await enrollments.get_student_enrollments(
+            credentials['enrollments_id'], credentials['enrollments_key'],
+            args.identifier, term_id, args.id_type,
+            course_attr=args.attribute)
+        if class_sections:
+            for class_section in class_sections: print(class_section)
     elif args.command == 'term':
         # determine the numeric term id (e.g. 2192) from the year and semester
         term_id = await terms.get_term_id_from_year_sem(

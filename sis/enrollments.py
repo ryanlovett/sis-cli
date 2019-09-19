@@ -17,7 +17,8 @@ enrollments_uri = "https://apis.berkeley.edu/sis/v2/enrollments"
 section_codes = ['LEC', 'SES', 'WBL', 'LAB']
 
 async def get_student_enrollments(app_id, app_key, identifier, term_id,
-    id_type='campus-uid', enrolled_only='true', primary_only='false'):
+    id_type='campus-uid', enrolled_only='true', primary_only='true',
+    course_attr='course-id'):
     '''Gets a students enrollments.'''
     uri = enrollments_uri + f"/students/{identifier}"
     headers = {
@@ -33,8 +34,13 @@ async def get_student_enrollments(app_id, app_key, identifier, term_id,
         "enrolled-only": enrolled_only,
         "primary-only": primary_only,
     }
-    student = await sis.get_items(uri, params, headers, 'student')
-    return jmespath.search("classSection", student)
+    enrollments = await sis.get_items(uri, params, headers, 'studentEnrollments')
+    logger.debug(f"enrollments: {enrollments}")
+    if course_attr == 'course-id':
+        flt = '[].classSection.class.course.identifiers[?type == `cs-course-id`].id[]'
+    elif course_attr == 'display-name':
+        flt = '[].classSection.class.course.displayName'
+    return jmespath.search(flt, enrollments)
 
 async def get_section_enrollments(app_id, app_key, term_id, section_id):
     '''Gets a course section's enrollments.'''
