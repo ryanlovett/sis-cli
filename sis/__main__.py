@@ -139,9 +139,12 @@ async def main():
 
     term_parser = subparsers.add_parser('term',
         help='Get term identifier.')
-    term_parser.add_argument('-y', dest='year', required=True,
+    term_parser.add_argument('-p', dest='position',
+        choices=['Next', 'Current', 'Previous'], default='Current',
         help='term year, e.g. 2019')
-    term_parser.add_argument('-s', dest='semester', required=True,
+    term_parser.add_argument('-y', dest='year',
+        help='term year, e.g. 2019')
+    term_parser.add_argument('-s', dest='semester',
         choices=['spring', 'summer', 'fall'], type=str.lower,
         help='semester')
 
@@ -221,11 +224,21 @@ async def main():
         if class_sections:
             for class_section in class_sections: print(class_section)
     elif args.command == 'term':
+        if (not args.year and args.semester) or (args.year and not args.semester):
+            print("Specify both year and semester, or neither.")
+            sys.exit(1)
+        # determine the numeric term from the temporal position
+        if not args.year:
+            term_id = await terms.get_term_id(
+                credentials['terms_id'], credentials['terms_key'],
+                args.position
+            )
         # determine the numeric term id (e.g. 2192) from the year and semester
-        term_id = await terms.get_term_id_from_year_sem(
-            credentials['terms_id'], credentials['terms_key'],
-            args.year, args.semester
-        )
+        else:
+            term_id = await terms.get_term_id_from_year_sem(
+                credentials['terms_id'], credentials['terms_key'],
+                args.year, args.semester
+            )
         print(term_id)
 
 def run():
