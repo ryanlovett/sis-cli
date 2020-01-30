@@ -17,6 +17,7 @@ import asyncio
 import json
 import logging
 import os
+import pathlib
 import sys
 
 from sis import sis, classes, enrollments, student, terms
@@ -54,6 +55,10 @@ def read_credentials(filename, required_keys=secret_keys):
     '''Read credentials from {filename}. Returns a dict.'''
     return read_json_data(filename, required_keys)
 
+def credentials_file():
+    '''Default path to credentials file.'''
+    return pathlib.PurePath.joinpath(pathlib.Path.home(), '.sis.json')
+
 def valid_term(string):
     valid_terms = ['Current', 'Next', 'Previous']
     if string.isdigit() or string in valid_terms:
@@ -66,10 +71,12 @@ def csv_list(string):
 
 ## main
 async def main():
+    default_creds_file = str(credentials_file())
+
     parser = argparse.ArgumentParser(
         description="Get data from UC Berkeley's SIS")
-    parser.add_argument('-f', dest='credentials', default='sis.json',
-        help='credentials file.')
+    parser.add_argument('-f', dest='credentials',
+        default=default_creds_file, help='credentials file.')
     parser.add_argument('-v', dest='verbose', action='store_true',
         help='set info log level')
     parser.add_argument('-d', dest='debug', action='store_true',
