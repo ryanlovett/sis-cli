@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 enrollments_uri = "https://apis.berkeley.edu/sis/v2/enrollments"
 
 # apparently some courses have LAB without LEC (?)
-section_codes = ['LEC', 'SES', 'WBL', 'LAB']
+section_codes = ['LEC', 'SES', 'WBL']
 
 async def get_student_enrollments(app_id, app_key, identifier, term_id,
     id_type='campus-uid', enrolled_only='true', primary_only='true',
@@ -169,7 +169,7 @@ def filter_lectures(sections, relevant_codes=section_codes):
             codes.append(section['code'])
     return codes
 
-async def get_lecture_section_ids(app_id, app_key, term_id, subject_area, catalog_number):
+async def get_lecture_section_ids(app_id, app_key, term_id, subject_area, catalog_number=None):
     '''
       Given a term, subject, and course number, return the lecture section ids.
       We only care about the lecture enrollments since they contain a superset
@@ -183,9 +183,10 @@ async def get_lecture_section_ids(app_id, app_key, term_id, subject_area, catalo
     }
     params = {
         'page-number': 1,
-        "subject-area-code": subject_area,
-        "catalog-number": catalog_number,
+        "subject-area-code": subject_area
     }
+    if catalog_number:
+        params["catalog-number"] = catalog_number
     # Retrieve the sections associated with the course which includes
     # both lecture and sections.
     sections = await sis.get_items(uri, params, headers, 'fieldValues')

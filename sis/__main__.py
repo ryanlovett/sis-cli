@@ -104,6 +104,9 @@ async def main():
         help='Subject area. e.g. "STAT"')
     classes_parser.add_argument('-t', dest='term_id',
         help='Term ID')
+    classes_parser.add_argument('-i', dest='identifier', required=True,
+        choices=['cs-course-id', 'class-number'], type=str.lower,
+        help='class identifier')
 
     section_parser = subparsers.add_parser('section',
         help='Get information about a section.')
@@ -199,10 +202,17 @@ async def main():
                 term_id = await terms.get_term_id(
                     credentials['terms_id'], credentials['terms_key'],
                 )
-            course_ids = await classes.get_classes_by_subject_area(
-                credentials['classes_id'], credentials['classes_key'],
-                term_id, args.subject_area
-            )
+            if args.identifier == "cs-course-id":
+                course_ids = await classes.get_classes_by_subject_area(
+                    credentials['classes_id'], credentials['classes_key'],
+                    term_id, args.subject_area
+                )
+            elif args.identifier == "class-number":
+                course_ids = await enrollments.get_lecture_section_ids(
+                    credentials['enrollments_id'],
+                    credentials['enrollments_key'],
+                    term_id, args.subject_area
+                )
             for course_id in course_ids: print(course_id)
     elif args.command == 'section':
         term_id = await terms.get_term_id_from_year_sem(
