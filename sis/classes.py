@@ -11,7 +11,28 @@ logging.basicConfig(stream=sys.stdout, level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 # SIS endpoint
+classes_uri          = "https://apis.berkeley.edu/sis/v1/classes"
 classes_sections_uri = "https://apis.berkeley.edu/sis/v1/classes/sections"
+
+async def get_classes_by_subject_area(app_id, app_key, term_id, subject_area):
+    '''Given a term and subject area, return class data.'''
+    headers = {
+        "Accept": "application/json",
+        "app_id": app_id,
+        "app_key": app_key
+    }
+    params = {
+        "subject-area-code": subject_area,
+        "term-id": term_id,
+    }
+    uri = classes_uri
+    logger.debug(f"get_classes_by_subject_area: {uri} {params}")
+    classes = await sis.get_items(uri, params, headers, 'classes')
+    course_ids = jmespath.search(
+        "[].course.identifiers[?type=='cs-course-id'].id[]",
+        classes
+    )
+    return sorted(list(set(course_ids)))
 
 async def get_sections_by_id(app_id, app_key, term_id, class_section_id, include_secondary='true'):
     '''Given a term and class section ID, return section data.'''
@@ -24,8 +45,6 @@ async def get_sections_by_id(app_id, app_key, term_id, class_section_id, include
         "class-section-id": class_section_id,
         "term-id": term_id,
         "include-secondary": include_secondary,
-        #"page-size": 400,
-        #"page-number": 1
     }
     uri = f'{classes_sections_uri}/{class_section_id}'
     logger.debug(f"get_sections_by_id: {uri} {params}")

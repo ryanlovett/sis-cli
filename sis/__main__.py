@@ -79,14 +79,14 @@ async def main():
 
     people_parser = subparsers.add_parser('people',
         help='Get lists of people.')
-    people_parser.add_argument('-y', dest='year', required=True,
+    people_term_group = people_parser.add_mutually_exclusive_group()
+    people_term_group.add_argument('-t', dest='sis_term_id', type=valid_term,
+        help='SIS term id or position, e.g. 2192. Default: the current term.')
+    people_term_group.add_argument('-y', dest='year',
         help='course year, e.g. 2019')
-    people_parser.add_argument('-s', dest='semester', required=True,
+    people_parser.add_argument('-s', dest='semester',
         choices=['spring', 'summer', 'fall'], type=str.lower,
         help='semester')
-    #people_parser.add_argument('-t', dest='sis_term_id', type=valid_term,
-    #    default='Current',
-    #    help='SIS term id or position, e.g. 2192. Default: Current')
     people_parser.add_argument('-n', dest='class_number', required=True,
         type=int, help='class section number, e.g. 14720')
     people_parser.add_argument('-c', dest='constituents', default='enrolled',
@@ -97,6 +97,13 @@ async def main():
         help='course constituents')
     people_parser.add_argument('--exact', dest='exact', action='store_true',
         help='exclude data from sections with matching subject and code.')
+
+    classes_parser = subparsers.add_parser('classes',
+        help='Get classes.')
+    classes_parser.add_argument('-s', dest='subject_area',
+        help='Subject area. e.g. "STAT"')
+    classes_parser.add_argument('-t', dest='term_id',
+        help='Term ID')
 
     section_parser = subparsers.add_parser('section',
         help='Get information about a section.')
@@ -160,10 +167,18 @@ async def main():
     
     if args.command == 'people':
         # determine the numeric term id (e.g. 2192) from the year and semester
-        term_id = await terms.get_term_id_from_year_sem(
-            credentials['terms_id'], credentials['terms_key'],
-            args.year, args.semester
-        )
+        if args.year:
+            term_id = await terms.get_term_id_from_year_sem(
+                credentials['terms_id'], credentials['terms_key'],
+                args.year, args.semester
+            )
+        elif args.sis_term_id:
+            term_id = args.sis_term_id
+        else:
+            # default is position='Current'
+            term_id = await terms.get_term_id(
+                credentials['terms_id'], credentials['terms_key']
+            )
 
         include_secondary = 'false' if args.exact else 'true'
         if args.constituents in ['enrolled', 'waitlisted', 'students']:
@@ -176,6 +191,19 @@ async def main():
                 include_secondary, args.identifier)
         if uids:
             for uid in uids: print(uid)
+    elif args.command == 'classes':
+        if args.subject_area:
+            if args.term_id:
+                term_id = args.term_id
+            else:
+                term_id = await terms.get_term_id(
+                    credentials['terms_id'], credentials['terms_key'],
+                )
+            course_ids = await classes.get_classes_by_subject_area(
+                credentials['classes_id'], credentials['classes_key'],
+                term_id, args.subject_area
+            )
+            for course_id in course_ids: print(course_id)
     elif args.command == 'section':
         term_id = await terms.get_term_id_from_year_sem(
             credentials['terms_id'], credentials['terms_key'],
