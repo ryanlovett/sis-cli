@@ -156,7 +156,7 @@ async def main():
 
     term_parser = subparsers.add_parser('term',
         help='Get term identifier.')
-    term_parser.add_argument('-p', dest='position',
+    term_parser.add_argument('-p', dest='position', type=str.capitalize,
         choices=['Next', 'Current', 'Previous'], default='Current',
         help='term year, e.g. 2019')
     term_parser.add_argument('-y', dest='year',
