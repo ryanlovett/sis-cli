@@ -107,8 +107,21 @@ async def get_instructors(app_id, app_key, term_id, class_number, include_second
 
 def section_instructors(section, id_attr='campus-uid'):
     '''Extract disclosed identifiers of section instructors.'''
+    # get all instructors
+    all_instructors = jmespath.search(
+        "meetings[].assignedInstructors[]",
+        section
+    )
+    # exclude any who have a 'role' that is 'APRX' (administrative proxy).
+    primary = filter(
+        lambda x: 'role' in x and x['role']['code'] != 'APRX',
+        all_instructors
+    )
     # search for disclosed identifiers of type {id_attr}
-    ids = jmespath.search(f"meetings[].assignedInstructors[].instructor.identifiers[?disclose && type=='{id_attr}'].id[]", section)
+    ids = jmespath.search(
+        f"[].instructor.identifiers[?disclose && type=='{id_attr}'].id[]",
+        list(primary)
+    )
     if ids is None:
         return set()
     return set(ids)
