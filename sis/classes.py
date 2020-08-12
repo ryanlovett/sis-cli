@@ -112,6 +112,8 @@ def section_instructors(section, id_attr='campus-uid'):
         "meetings[].assignedInstructors[]",
         section
     )
+    if all_instructors is None:
+        return set()
     # exclude any who have a 'role' that is 'APRX' (administrative proxy).
     primary = filter(
         lambda x: 'role' in x and x['role']['code'] != 'APRX',
