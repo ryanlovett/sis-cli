@@ -190,6 +190,11 @@ async def main():
                 credentials['terms_id'], credentials['terms_key']
             )
 
+        if not term_id: # e.g. we are between semesters
+            # another strategy is to pretend we're 30 days in the future and retry
+            # to get the term id
+            return
+
         include_secondary = 'false' if args.exact else 'true'
         if args.constituents in ['enrolled', 'waitlisted', 'students']:
             uids = await enrollments.get_students(term_id, args.class_number,

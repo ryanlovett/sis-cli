@@ -19,6 +19,8 @@ async def get_term_name(app_id, app_key, term_id):
         "app_id": app_id, "app_key": app_key
     }
     terms = await sis.get_items(uri, params, headers, 'terms')
+    if len(terms) == 0: # if we are between terms
+        return None
     return terms[0]['name']
 
 async def get_term_id(app_id, app_key, position='Current'):
@@ -31,6 +33,9 @@ async def get_term_id(app_id, app_key, position='Current'):
     }
     params = { "temporal-position": position }
     terms = await sis.get_items(uri, params, headers, 'terms')
+    logger.debug(f"terms: {terms}")
+    if len(terms) == 0: # if we are between terms
+        return None
     return terms[0]['id']
 
 async def get_term_id_from_year_sem(app_id, app_key, year, semester):
