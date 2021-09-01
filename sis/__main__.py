@@ -153,6 +153,8 @@ async def main():
     courses_parser.add_argument('-a', dest='attribute', required=False,
         choices=['course-id', 'display-name'], type=str.lower,
         default='course-id', help='course descriptor')
+    courses_parser.add_argument('-w', dest='include_waitlisted', action='store_true',
+        help='include waitlisted')
 
     term_parser = subparsers.add_parser('term',
         help='Get term identifier.')
@@ -267,9 +269,12 @@ async def main():
             credentials['terms_id'], credentials['terms_key'],
             args.year, args.semester
         )
+        # enrolled only is the opposite of include waitlisted,
+        # and must be a string
+        enrolled_only = {False:'true', True:'false'}[args.include_waitlisted]
         class_sections = await enrollments.get_student_enrollments(
             credentials['enrollments_id'], credentials['enrollments_key'],
-            args.identifier, term_id, args.id_type,
+            args.identifier, term_id, args.id_type, enrolled_only=enrolled_only,
             course_attr=args.attribute)
         if class_sections:
             for class_section in class_sections: print(class_section)
