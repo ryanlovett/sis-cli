@@ -12,6 +12,7 @@ async def get_items(url, params, headers, item_type):
     '''Recursively get a list of items (enrollments, ) from the SIS.'''
     logger.info(f"get_items: getting {item_type}")
     data = []
+    logger.debug(f"url: {url} | headers: {headers} | params: {params}")
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers, params=params) as r:
             if r.status == 404:

@@ -151,6 +151,8 @@ async def get_students(term_id, class_number, constituents, credentials, exact, 
     else:
         enrollment_attr_fn = enrollment_campus_email
 
+    logger.debug(f"constituent_enrollments: {constituent_enrollments}")
+
     # we convert to a set to collapse overlapping enrollments between
     # lectures and labs (if not exact)
     return set(map(lambda x: enrollment_attr_fn(x), constituent_enrollments))
