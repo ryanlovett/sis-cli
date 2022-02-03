@@ -117,9 +117,12 @@ async def main():
 
     section_parser = subparsers.add_parser('section',
         help='Get information about a section.')
-    section_parser.add_argument('-y', dest='year', required=True,
+    section_term_group = section_parser.add_mutually_exclusive_group()
+    section_term_group.add_argument('-t', dest='sis_term_id', type=valid_term,
+        help='SIS term id or position, e.g. 2192. Default: the current term.')
+    section_term_group.add_argument('-y', dest='year',
         help='course year, e.g. 2019')
-    section_parser.add_argument('-s', dest='semester', required=True,
+    section_parser.add_argument('-s', dest='semester',
         choices=['spring', 'summer', 'fall'], type=str.lower,
         help='semester')
     section_parser.add_argument('-n', dest='class_number', required=True,
@@ -229,10 +232,24 @@ async def main():
                 )
             for course_id in course_ids: print(course_id)
     elif args.command == 'section':
-        term_id = await terms.get_term_id_from_year_sem(
-            credentials['terms_id'], credentials['terms_key'],
-            args.year, args.semester
-        )
+        if args.year:
+            term_id = await terms.get_term_id_from_year_sem(
+                credentials['terms_id'], credentials['terms_key'],
+                args.year, args.semester
+            )
+        elif args.sis_term_id:
+            term_id = args.sis_term_id
+        else:
+            # default is position='Current'
+            term_id = await terms.get_term_id(
+                credentials['terms_id'], credentials['terms_key']
+            )
+
+        if not term_id: # e.g. we are between semesters
+            # another strategy is to pretend we're 30 days in the future and retry
+            # to get the term id
+            return
+
         sections = await classes.get_sections_by_id(
             credentials['classes_id'], credentials['classes_key'],
             term_id, args.class_number, include_secondary='false'
