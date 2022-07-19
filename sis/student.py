@@ -13,10 +13,9 @@ logger = logging.getLogger(__name__)
 # Various SIS endpoints
 students_url = "https://apis.berkeley.edu/sis/v2/students"
 
-async def get_academic_statuses(app_id, app_key, identifier, id_type):
+async def get_student(app_id, app_key, identifier, id_type, item_key):
     '''Given a term and class section ID, return section data.'''
     uri = f'{students_url}/{identifier}'
-    item_key = 'academicStatuses'
 
     headers = {
         "Accept": "application/json",
@@ -35,6 +34,22 @@ async def get_academic_statuses(app_id, app_key, identifier, id_type):
     items = await sis.get_items(uri, params, headers, item_key)
     logger.debug(f"items: {items}")
     return items
+
+async def get_academic_statuses(app_id, app_key, identifier, id_type):
+    '''Given a student identifier, return student academic statuses.'''
+    items = await get_student(app_id, app_key, identifier, id_type, 'academicStatuses')
+    return items
+
+async def get_name(app_id, app_key, identifier, id_type, code='Preferred'):
+    '''Given a student identifier, return student names.'''
+    items = await get_student(app_id, app_key, identifier, id_type, 'names')
+    names = []
+    for item in items:
+        if jmespath.search('type.description', item) != code:
+            continue
+        sn = jmespath.search('familyName', item)
+        givenName = jmespath.search('givenName', item)
+        return f"{sn},{givenName}"
 
 def get_academic_plans(status):
     logger.debug(f"status: {status}")

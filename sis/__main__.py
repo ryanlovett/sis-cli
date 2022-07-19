@@ -132,14 +132,14 @@ async def main():
         type=str.lower, help='attribute')
 
     students_parser = subparsers.add_parser('student',
-        help='Get academic programs.')
+        help='Get information about a student.')
     students_parser.add_argument('-i', dest='identifier', required=True,
         help='id of student')
     students_parser.add_argument('-t', dest='id_type', metavar='type',
         required=True, choices=['campus-id', 'student-id'], type=str.lower,
         default='campus-id', help='id type')
     students_parser.add_argument('-a', dest='attribute', required=True,
-        choices=[ 'plans', 'email' ], type=str.lower, help='attribute')
+        choices=[ 'plans', 'email', 'name' ], type=str.lower, help='attribute')
 
     courses_parser = subparsers.add_parser('courses',
         help='Get student courses.')
@@ -281,6 +281,13 @@ async def main():
                 args.identifier, args.id_type
             )
             for email in emails: print(email)
+        elif args.attribute == 'name':
+            code = 'Preferred' # support others
+            name = await student.get_name(
+                credentials['students_id'], credentials['students_key'],
+                args.identifier, args.id_type, code
+            )
+            print(name)
     elif args.command == 'courses':
         term_id = await terms.get_term_id_from_year_sem(
             credentials['terms_id'], credentials['terms_key'],
