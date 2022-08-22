@@ -254,17 +254,15 @@ async def main():
             credentials['classes_id'], credentials['classes_key'],
             term_id, args.class_number, include_secondary='false'
         )
-        if len(sections) != 1:
-            raise Exception(f"Unexpected number of sections: {len(sections)}")
-        section = sections[0]
-        if args.attribute == 'subject_area':
-            print(enrollments.section_subject_area(section))
-        elif args.attribute == 'catalog_number':
-            print(enrollments.section_catalog_number(section))
-        elif args.attribute == 'display_name':
-            print(enrollments.section_display_name(section))
-        elif args.attribute == 'is_primary':
-            print({ True:'1', False:'0' }[enrollments.section_display_name(section)])
+        for section in sections:
+            if args.attribute == 'subject_area':
+                print(enrollments.section_subject_area(section))
+            elif args.attribute == 'catalog_number':
+                print(enrollments.section_catalog_number(section))
+            elif args.attribute == 'display_name':
+                print(enrollments.section_display_name(section))
+            elif args.attribute == 'is_primary':
+                print({ True:'1', False:'0' }[enrollments.section_display_name(section)])
     elif args.command == 'student':
         if args.attribute == 'plans':
             statuses = await student.get_academic_statuses(
