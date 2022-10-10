@@ -11,7 +11,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 # Various SIS endpoints
-students_url = "https://gateway.apis.berkeley.edu/sis/v2/students"
+students_url = "https://gateway.api.berkeley.edu/sis/v2/students"
 
 async def get_student(app_id, app_key, identifier, id_type, item_key):
     '''Given a term and class section ID, return section data.'''

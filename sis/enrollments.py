@@ -11,7 +11,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 # SIS endpoint
-enrollments_uri = "https://gateway.apis.berkeley.edu/sis/v2/enrollments"
+enrollments_uri = "https://gateway.api.berkeley.edu/sis/v2/enrollments"
 
 # apparently some courses have LAB without LEC (?)
 section_codes = ['LEC', 'SES', 'WBL']
