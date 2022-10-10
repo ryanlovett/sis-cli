@@ -9,7 +9,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 # SIS endpoint
-terms_uri = "https://apis.berkeley.edu/sis/v1/terms"
+terms_uri = "https://gateway.apis.berkeley.edu/sis/v1/terms"
 
 async def get_term_name(app_id, app_key, term_id):
     '''Given a term id, return the term's friendly name.'''

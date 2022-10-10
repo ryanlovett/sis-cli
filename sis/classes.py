@@ -11,8 +11,8 @@ logging.basicConfig(stream=sys.stdout, level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 # SIS endpoint
-classes_uri          = "https://apis.berkeley.edu/sis/v1/classes"
-classes_sections_uri = "https://apis.berkeley.edu/sis/v1/classes/sections"
+classes_uri          = "https://gateway.apis.berkeley.edu/sis/v1/classes"
+classes_sections_uri = "https://gateway.apis.berkeley.edu/sis/v1/classes/sections"
 
 async def get_classes_by_subject_area(app_id, app_key, term_id, subject_area):
     '''Given a term and subject area, return class data.'''
