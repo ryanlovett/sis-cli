@@ -6,6 +6,28 @@ Requires SIS API credentials.
 
 Please submit issues to this repository since this software is not maintained by the SIS team.
 
+```
+usage: sis [-h] [-f CREDENTIALS] [-v] [-d]
+           {people,classes,section,student,courses,term} ...
+
+Get data from UC Berkeley's SIS
+
+positional arguments:
+  {people,classes,section,student,courses,term}
+    people              Get lists of people.
+    classes             Get classes.
+    section             Get information about a section.
+    student             Get information about a student.
+    courses             Get student courses.
+    term                Get term identifier.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -f CREDENTIALS        credentials file.
+  -v                    set info log level
+  -d                    set debug log level
+```
+
 People
 ------
 ```
