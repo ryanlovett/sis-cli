@@ -18,6 +18,7 @@ import json
 import logging
 import os
 import pathlib
+import pprint
 import sys
 
 from sis import sis, classes, enrollments, student, terms
@@ -128,7 +129,7 @@ async def main():
     section_parser.add_argument('-n', dest='class_number', required=True,
         type=int, help='class section number, e.g. 14720')
     section_parser.add_argument('-a', dest='attribute', required=True,
-        choices=['subject_area', 'catalog_number', 'display_name', 'is_primary'],
+        choices=['subject_area', 'catalog_number', 'display_name', 'is_primary', 'all'],
         type=str.lower, help='attribute')
 
     students_parser = subparsers.add_parser('student',
@@ -263,6 +264,8 @@ async def main():
                 print(enrollments.section_display_name(section))
             elif args.attribute == 'is_primary':
                 print({ True:'1', False:'0' }[enrollments.section_display_name(section)])
+            elif args.attribute == 'all':
+                pprint.pprint(section)
     elif args.command == 'student':
         if args.attribute == 'plans':
             statuses = await student.get_academic_statuses(
