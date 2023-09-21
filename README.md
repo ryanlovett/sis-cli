@@ -28,6 +28,8 @@ optional arguments:
   -d                    set debug log level
 ```
 
+By default, `sis` will read credentials from ~/.sis.json.
+
 People
 ------
 ```
