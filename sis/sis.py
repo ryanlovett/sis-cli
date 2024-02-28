@@ -35,7 +35,7 @@ async def get_items(url, params, headers, item_type):
                 logger.error(f"headers: {headers}")
                 raise
 
-    # Removed from Terms API in 2/2024
+    # apiResponse node was removed from Terms API in 2/2024
     if 'apiResponse' in data:
         data = data['apiResponse']
 
