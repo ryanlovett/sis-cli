@@ -34,20 +34,26 @@ async def get_items(url, params, headers, item_type):
                 logger.error(f"status: {r.status}")
                 logger.error(f"headers: {headers}")
                 raise
+
+    # Removed from Terms API in 2/2024
+    if 'apiResponse' in data:
+        data = data['apiResponse']
+
     # Return if there is no response (e.g. 404)
-    if 'apiResponse' not in data or 'response' not in data['apiResponse']:
-        logger.debug('get_items: apiResponse not in data or response not in apiResponse')
-        logger.debug(f'get_items: returning: {data}')
+    if "response" not in data:
+        logger.debug("get_items: response not in data")
+        logger.debug(f"get_items: returning: {data}")
         return []
     # Return the whole response if no item_type is specified
-    elif item_type in [None, '']:
-        return data['apiResponse']['response']
+    elif item_type in [None, ""]:
+        return data["response"]
     # Return if the UID has no items
-    elif item_type not in data['apiResponse']['response']:
-        logger.debug(f'get_items: No {item_type} in response')
+    elif item_type not in data["response"]:
+        logger.debug(f"get_items: No {item_type} in response")
         return []
     # Get this page's items
-    items = data['apiResponse']['response'][item_type]
+    items = data["response"][item_type]
+
     # If we are not paginated, just return the items
     if 'page-number' not in params:
         logger.debug('no other pages')
