@@ -222,7 +222,7 @@ async def main():
 
     course_parser = subparsers.add_parser("course", help="Get courses.")
     course_parser.add_argument(
-        "-j", dest="json", action='store_true', help='Return JSON'
+        "-j", dest="json", action="store_true", help="Return JSON"
     )
     course_parser.add_argument(
         "-S",
@@ -447,7 +447,13 @@ async def main():
             print(name)
     elif args.command == "course":
         params = {}
-        for a in ["status-code", "subject-area-code", "catalog-number", "course_prefix", "course-number"]:
+        for a in [
+            "status-code",
+            "subject-area-code",
+            "catalog-number",
+            "course_prefix",
+            "course-number",
+        ]:
             v = getattr(args, a, None)
             if v is not None:
                 params[a] = v
