@@ -249,6 +249,12 @@ async def main():
         default=None,
         help='Course number. e.g. "123 in C123AC"',
     )
+    course_parser.add_argument(
+        "-a",
+        dest="academic-career-code",
+        default=None,
+        help='Academic career code. e.g. "UGRD", "GRAD"',
+    )
     # subject_area=None, catalog_number=None, course_prefix=None, course_number=None
 
     # courses_parser = subparsers.add_parser('courses',
