@@ -22,6 +22,9 @@ async def get_courses(app_id, app_key, **kwargs):
         return []
     uri = classes_uri
     params = kwargs
+    if 'sort-by' not in params:
+        params['sort-by'] = 'catalog-number'
+
     courses = await sis.get_items(uri, params, headers, "courses")
     return courses
 
