@@ -38,6 +38,8 @@ async def get_items(url, params, headers, item_type):
     # apiResponse node was removed from Terms API in 2/2024
     if 'apiResponse' in data:
         data = data['apiResponse']
+    else:
+        logger.debug("'apiResponse' not in data")
 
     # Return if there is no response (e.g. 404)
     if "response" not in data:

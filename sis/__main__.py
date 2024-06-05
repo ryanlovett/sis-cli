@@ -257,23 +257,43 @@ async def main():
     )
     # subject_area=None, catalog_number=None, course_prefix=None, course_number=None
 
-    # courses_parser = subparsers.add_parser('courses',
-    #    help='Get student courses.')
-    # courses_parser.add_argument('-i', dest='identifier', required=True,
-    #    help='id of student')
-    # courses_parser.add_argument('-t', dest='id_type', metavar='type',
-    #    required=True, choices=['campus-uid', 'student-id'], type=str.lower,
-    #    default='campus-uid', help='id type')
-    # courses_parser.add_argument('-y', dest='year', required=True,
-    #    help='term year, e.g. 2019')
-    # courses_parser.add_argument('-s', dest='semester', required=True,
-    #    choices=['spring', 'summer', 'fall'], type=str.lower,
-    #    help='semester')
-    # courses_parser.add_argument('-a', dest='attribute', required=False,
-    #    choices=['course-id', 'display-name'], type=str.lower,
-    #    default='course-id', help='course descriptor')
-    # courses_parser.add_argument('-w', dest='include_waitlisted', action='store_true',
-    #    help='include waitlisted')
+    courses_parser = subparsers.add_parser("courses", help="Get student courses.")
+    courses_parser.add_argument(
+        "-i", dest="identifier", required=True, help="id of student"
+    )
+    courses_parser.add_argument(
+        "-t",
+        dest="id_type",
+        metavar="type",
+        required=True,
+        choices=["campus-uid", "student-id"],
+        type=str.lower,
+        default="campus-uid",
+        help="id type",
+    )
+    courses_parser.add_argument(
+        "-y", dest="year", required=True, help="term year, e.g. 2019"
+    )
+    courses_parser.add_argument(
+        "-s",
+        dest="semester",
+        required=True,
+        choices=["spring", "summer", "fall"],
+        type=str.lower,
+        help="semester",
+    )
+    courses_parser.add_argument(
+        "-a",
+        dest="attribute",
+        required=False,
+        choices=["course-id", "display-name"],
+        type=str.lower,
+        default="course-id",
+        help="course descriptor",
+    )
+    courses_parser.add_argument(
+        "-w", dest="include_waitlisted", action="store_true", help="include waitlisted"
+    )
 
     term_parser = subparsers.add_parser("term", help="Get term identifier.")
     term_parser.add_argument(
