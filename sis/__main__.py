@@ -258,11 +258,26 @@ async def main():
     # subject_area=None, catalog_number=None, course_prefix=None, course_number=None
 
     courses_parser = subparsers.add_parser("courses", help="Get student courses.")
+    courses_term_group = courses_parser.add_mutually_exclusive_group()
+    courses_term_group.add_argument(
+        "-t",
+        dest="sis_term_id",
+        type=valid_term,
+        help="SIS term id or position, e.g. 2192. Default: the current term.",
+    )
+    courses_term_group.add_argument("-y", dest="year", help="course year, e.g. 2019")
+    courses_parser.add_argument(
+        "-s",
+        dest="semester",
+        choices=["spring", "summer", "fall"],
+        type=str.lower,
+        help="semester",
+    )
     courses_parser.add_argument(
         "-i", dest="identifier", required=True, help="id of student"
     )
     courses_parser.add_argument(
-        "-t",
+        "-T",
         dest="id_type",
         metavar="type",
         required=True,
@@ -270,17 +285,6 @@ async def main():
         type=str.lower,
         default="campus-uid",
         help="id type",
-    )
-    courses_parser.add_argument(
-        "-y", dest="year", required=True, help="term year, e.g. 2019"
-    )
-    courses_parser.add_argument(
-        "-s",
-        dest="semester",
-        required=True,
-        choices=["spring", "summer", "fall"],
-        type=str.lower,
-        help="semester",
     )
     courses_parser.add_argument(
         "-a",
@@ -485,9 +489,27 @@ async def main():
         else:
             course.print_courses(data)
     elif args.command == "courses":
-        term_id = await terms.get_term_id_from_year_sem(
-            credentials["terms_id"], credentials["terms_key"], args.year, args.semester
-        )
+        # determine the numeric term id (e.g. 2192) from the year and semester
+        if args.year:
+            term_id = await terms.get_term_id_from_year_sem(
+                credentials["terms_id"],
+                credentials["terms_key"],
+                args.year,
+                args.semester,
+            )
+        elif args.sis_term_id:
+            term_id = args.sis_term_id
+        else:
+            # default is position='Current'
+            term_id = await terms.get_term_id(
+                credentials["terms_id"], credentials["terms_key"]
+            )
+
+        if not term_id:  # e.g. we are between semesters
+            # another strategy is to pretend we're 30 days in the future and retry
+            # to get the term id
+            return
+
         # enrolled only is the opposite of include waitlisted,
         # and must be a string
         enrolled_only = {False: "true", True: "false"}[args.include_waitlisted]
