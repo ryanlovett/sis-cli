@@ -303,9 +303,9 @@ async def main():
     term_parser.add_argument(
         "-p",
         dest="position",
-        type=str.capitalize,
-        choices=["Next", "Current", "Previous"],
-        default="Current",
+        type=str.lower,
+        choices=["next", "current", "previous"],
+        default="current",
         help="term year, e.g. 2019",
     )
     term_parser.add_argument("-y", dest="year", help="term year, e.g. 2019")
