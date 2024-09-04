@@ -3,26 +3,28 @@ import logging
 import sys
 
 import aiohttp
+import jmespath
 
 # logging
 logging.basicConfig(stream=sys.stdout, level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
-async def get_items(url, params, headers, item_type):
-    '''Recursively get a list of items (enrollments, ) from the SIS.'''
-    logger.info(f"get_items: getting {item_type}")
+
+async def get_items(url, params, headers, path):
+    """Recursively get a list of items (enrollments, ) from the SIS."""
+    logger.info(f"get_items: getting {path}")
     data = []
     logger.debug(f"url: {url} | headers: {headers} | params: {params}")
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers, params=params) as r:
             if r.status == 404:
-                return data # api returns 404 at end of pagination
+                return data  # api returns 404 at end of pagination
             elif r.status in [401]:
                 retval = {
-                    'error': r.status,
-                    'url': url,
-                    'headers': headers,
-                    'params': params
+                    "error": r.status,
+                    "url": url,
+                    "headers": headers,
+                    "params": params,
                 }
                 raise Exception(f"HTTP error {retval}")
             try:
@@ -36,8 +38,8 @@ async def get_items(url, params, headers, item_type):
                 raise
 
     # apiResponse node was removed from Terms API in 2/2024
-    if 'apiResponse' in data:
-        data = data['apiResponse']
+    if "apiResponse" in data:
+        data = data["apiResponse"]
     else:
         logger.debug("'apiResponse' not in data")
 
@@ -46,23 +48,23 @@ async def get_items(url, params, headers, item_type):
         logger.debug("get_items: response not in data")
         logger.debug(f"get_items: returning: {data}")
         return []
-    # Return the whole response if no item_type is specified
-    elif item_type in [None, ""]:
+    # Return the whole response if no path is specified
+    elif path in [None, ""]:
         return data["response"]
-    # Return if the UID has no items
-    elif item_type not in data["response"]:
-        logger.debug(f"get_items: No {item_type} in response")
-        return []
     # Get this page's items
-    items = data["response"][item_type]
+    items = jmespath.search(path, data["response"])
+
+    if not items:
+        logger.debug(f"get_items: No {path} in response")
+        return []
 
     # If we are not paginated, just return the items
-    if 'page-number' not in params:
-        logger.debug('no other pages')
+    if "page-number" not in params:
+        logger.debug("no other pages")
         return items
     # Get the next page's items
-    params['page-number'] += 1
-    items += await get_items(url, params, headers, item_type)
+    params["page-number"] += 1
+    items += await get_items(url, params, headers, path)
     num = len(items)
-    logger.debug(f'There are {num} items of type {item_type}')
+    logger.debug(f"There are {num} items at path {path}")
     return items
