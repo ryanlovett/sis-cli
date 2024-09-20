@@ -38,7 +38,7 @@ async def get_student_enrollments(
         "enrolled-only": enrolled_only,
         "primary-only": primary_only,
     }
-    enrollments = await sis.get_items(uri, params, headers, "studentEnrollments")
+    enrollments = await sis.get_items(uri, params, headers, "enrollmentsByStudent.studentEnrollments")
     logger.info(f"{enrollments=}")
     logger.debug(f"enrollments: {enrollments}")
     if course_attr == "course-id":
