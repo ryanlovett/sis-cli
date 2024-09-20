@@ -38,13 +38,15 @@ async def get_student_enrollments(
         "enrolled-only": enrolled_only,
         "primary-only": primary_only,
     }
-    enrollments = await sis.get_items(uri, params, headers, "enrollmentsByStudent.studentEnrollments")
+    enrollments = await sis.get_items(
+        uri, params, headers, "enrollmentsByStudent.studentEnrollments"
+    )
     logger.info(f"{enrollments=}")
     logger.debug(f"enrollments: {enrollments}")
     if course_attr == "course-id":
-        flt = "[].enrollmentsByClassSection.classSection.class.course.identifiers[?type == `cs-course-id`].id[]"
+        flt = "[].classSection.class.course.identifiers[?type == `cs-course-id`].id[]"
     elif course_attr == "display-name":
-        flt = "[].enrollmentsByClassSection.classSection.class.course.displayName"
+        flt = "[].classSection.class.course.displayName"
     logger.info(f"{flt=}")
     return jmespath.search(flt, enrollments)
 
@@ -57,8 +59,10 @@ async def get_section_enrollments(app_id, app_key, term_id, section_id):
         "page-number": 1,
         "page-size": 100,  # maximum
     }
-    enrollments = await sis.get_items(uri, params, headers, "enrollmentsByClassSection.classSectionEnrollments")
-    
+    enrollments = await sis.get_items(
+        uri, params, headers, "enrollmentsByClassSection.classSectionEnrollments"
+    )
+
     logger.info(f"{section_id}: {len(enrollments)}")
     return enrollments
 
