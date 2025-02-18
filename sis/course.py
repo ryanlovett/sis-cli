@@ -1,5 +1,5 @@
 # vim:set et sw=4 ts=4:
-from datetiem import datetime
+from datetime import datetime
 import json
 import logging
 import sys
