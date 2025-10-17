@@ -98,6 +98,12 @@ async def main():
     parser.add_argument(
         "-d", dest="debug", action="store_true", help="set debug log level"
     )
+    parser.add_argument(
+        "--json",
+        dest="json",
+        action="store_true",
+        help="output JSON from subcommands (indent=4)",
+    )
 
     subparsers = parser.add_subparsers(dest="command")
 
@@ -290,7 +296,7 @@ async def main():
         "-a",
         dest="attribute",
         required=False,
-        choices=["course-id", "display-name"],
+        choices=["course-id", "display-name", "all"],
         type=str.lower,
         default="course-id",
         help="course descriptor",
@@ -368,9 +374,12 @@ async def main():
                 include_secondary,
                 args.identifier,
             )
-        if uids:
-            for uid in uids:
-                print(uid)
+        if args.json:
+            print(json.dumps(uids or [], indent=4))
+        else:
+            if uids:
+                for uid in uids:
+                    print(uid)
     elif args.command == "classes":
         if args.subject_area:
             if args.term_id:
@@ -394,8 +403,11 @@ async def main():
                     term_id,
                     args.subject_area,
                 )
-            for course_id in course_ids:
-                print(course_id)
+            if args.json:
+                print(json.dumps(course_ids or [], indent=4))
+            else:
+                for course_id in course_ids:
+                    print(course_id)
     elif args.command == "section":
         if args.year:
             term_id = await terms.get_term_id_from_year_sem(
@@ -424,19 +436,25 @@ async def main():
             args.class_number,
             include_secondary="false",
         )
-        for section in sections:
-            if args.attribute == "subject_area":
-                print(enrollments.section_subject_area(section))
-            elif args.attribute == "catalog_number":
-                print(enrollments.section_catalog_number(section))
-            elif args.attribute == "display_name":
-                print(enrollments.section_display_name(section))
-            elif args.attribute == "is_primary":
-                print(
-                    {True: "1", False: "0"}[enrollments.section_display_name(section)]
-                )
-            elif args.attribute == "all":
-                pprint.pprint(section)
+        if args.attribute == "all":
+            if args.json:
+                print(json.dumps(sections or [], indent=4))
+            else:
+                for section in sections:
+                    pprint.pprint(section)
+        else:
+            # non-json behavior prints one value per section line-by-line
+            for section in sections:
+                if args.attribute == "subject_area":
+                    print(enrollments.section_subject_area(section))
+                elif args.attribute == "catalog_number":
+                    print(enrollments.section_catalog_number(section))
+                elif args.attribute == "display_name":
+                    print(enrollments.section_display_name(section))
+                elif args.attribute == "is_primary":
+                    print(
+                        {True: "1", False: "0"}[enrollments.section_display_name(section)]
+                    )
     elif args.command == "student":
         if args.attribute == "plans":
             statuses = await student.get_academic_statuses(
@@ -448,8 +466,11 @@ async def main():
             plans = []
             for status in statuses:
                 plans += student.get_academic_plans(status)
-            for plan in plans:
-                print(plan["code"])
+            if args.json:
+                print(json.dumps(plans, indent=4))
+            else:
+                for plan in plans:
+                    print(plan["code"])
         elif args.attribute == "email":
             emails = await student.get_emails(
                 credentials["students_id"],
@@ -457,8 +478,11 @@ async def main():
                 args.identifier,
                 args.id_type,
             )
-            for email in emails:
-                print(email)
+            if args.json:
+                print(json.dumps(emails or [], indent=4))
+            else:
+                for email in emails:
+                    print(email)
         elif args.attribute == "name":
             code = "Preferred"  # support others
             name = await student.get_name(
@@ -468,7 +492,10 @@ async def main():
                 args.id_type,
                 code,
             )
-            print(name)
+            if args.json:
+                print(json.dumps(name, indent=4))
+            else:
+                print(name)
     elif args.command == "course":
         params = {}
         for a in [
@@ -523,8 +550,11 @@ async def main():
             course_attr=args.attribute,
         )
         if class_sections:
-            for class_section in class_sections:
-                print(class_section)
+            if args.json:
+                print(json.dumps(class_sections, indent=4))
+            else:
+                for class_section in class_sections:
+                    print(class_section)
     elif args.command == "term":
         if (not args.year and args.semester) or (args.year and not args.semester):
             print("Specify both year and semester, or neither.")
@@ -542,7 +572,10 @@ async def main():
                 args.year,
                 args.semester,
             )
-        print(term_id)
+        if args.json:
+            print(json.dumps(term_id, indent=4))
+        else:
+            print(term_id)
 
 
 def run():

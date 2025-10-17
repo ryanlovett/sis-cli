@@ -47,6 +47,8 @@ async def get_student_enrollments(
         flt = "[].classSection.class.course.identifiers[?type == `cs-course-id`].id[]"
     elif course_attr == "display-name":
         flt = "[].classSection.class.course.displayName"
+    elif course_attr == "all":
+        flt = "[].classSection.class.course"
     logger.info(f"{flt=}")
     return jmespath.search(flt, enrollments)
 
