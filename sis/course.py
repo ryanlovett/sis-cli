@@ -13,7 +13,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
 # SIS endpoint
-classes_uri = "https://gateway.api.berkeley.edu/sis/v4/courses"
+classes_uri = "https://gateway.api.berkeley.edu/sis/v5/courses"
 
 
 async def get_courses(app_id, app_key, **kwargs):

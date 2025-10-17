@@ -227,9 +227,9 @@ async def main():
     course_parser.add_argument(
         "-S",
         dest="status-code",
-        choices=["active", "deprecated"],
+        choices=["active", "future", "historical", "inactive"],
         type=str.lower,
-        help="attribute",
+        help="status code",
     )
     course_parser.add_argument(
         "-s", dest="subject-area-code", default=None, help='Subject area. e.g. "STAT"'
