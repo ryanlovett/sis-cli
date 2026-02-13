@@ -111,6 +111,17 @@ def enrollment_campus_email(enrollment):
     return jmespath.search(expr, enrollment)
 
 
+def enrollment_name(enrollment):
+    """Return an enrollment's preferred name if found, otherwise
+    return the first available name."""
+    expr = "student.names[?preferred].formattedName | [0]"
+    name = jmespath.search(expr, enrollment)
+    if name:
+        return name
+    expr = "student.names[].formattedName | [0]"
+    return jmespath.search(expr, enrollment)
+
+
 def get_enrollment_uids(enrollments):
     """Given an SIS enrollment, return the student's campus UID."""
     return list(map(lambda x: enrollment_campus_uid(x), enrollments))
@@ -195,8 +206,10 @@ async def get_students(
     # function to extract an enrollment attribute
     if identifier == "campus-uid":
         enrollment_attr_fn = enrollment_campus_uid
-    else:
+    elif identifier == "email":
         enrollment_attr_fn = enrollment_campus_email
+    else:  # name
+        enrollment_attr_fn = enrollment_name
 
     logger.debug(f"constituent_enrollments: {constituent_enrollments}")
 

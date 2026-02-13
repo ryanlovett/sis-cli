@@ -142,15 +142,21 @@ async def main():
         "-i",
         dest="identifier",
         default="campus-uid",
-        choices=["campus-uid", "email"],
+        choices=["campus-uid", "email", "name"],
         type=str.lower,
-        help="course constituents",
+        help="identifier type to extract",
     )
     people_parser.add_argument(
         "--exact",
         dest="exact",
         action="store_true",
         help="exclude data from sections with matching subject and code.",
+    )
+    people_parser.add_argument(
+        "--json",
+        dest="json",
+        action="store_true",
+        help="output raw API response data as JSON",
     )
 
     classes_parser = subparsers.add_parser("classes", help="Get classes.")

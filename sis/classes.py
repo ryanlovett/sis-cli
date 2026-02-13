@@ -130,7 +130,7 @@ def section_instructors(section, id_attr="campus-uid"):
         lambda x: "role" in x and x["role"]["code"] != "APRX", all_instructors
     )
 
-    # handle email vs campus-uid differently since they're stored in different places
+    # handle email vs campus-uid vs name differently since they're stored in different places
     if id_attr == "email":
         # emails are in instructor.emails array, similar to student emails
         # first try campus email (CAMP), then other email (OTHR)
@@ -148,6 +148,24 @@ def section_instructors(section, id_attr="campus-uid"):
                 )
                 if othr_email:
                     ids.append(othr_email)
+        return set(ids)
+    elif id_attr == "name":
+        # names are in instructor.names array - get the preferred or first formattedName
+        ids = []
+        for instructor in list(primary):
+            # Try to get preferred name first
+            preferred_name = jmespath.search(
+                "instructor.names[?preferred].formattedName | [0]", instructor
+            )
+            if preferred_name:
+                ids.append(preferred_name)
+            else:
+                # Fall back to first available name
+                any_name = jmespath.search(
+                    "instructor.names[].formattedName | [0]", instructor
+                )
+                if any_name:
+                    ids.append(any_name)
         return set(ids)
     else:
         # search for disclosed identifiers of type campus-uid
