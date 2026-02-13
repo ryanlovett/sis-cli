@@ -21,17 +21,16 @@ async def get_student(app_id, app_key, identifier, id_type, item_key):
     headers = {"Accept": "application/json", "app_id": app_id, "app_key": app_key}
     params = {
         "id-type": id_type,
+        "affiliation-status": "ACT",
         "inc-acad": "true",
         "inc-attr": "true",
-        "inc-regs": "false",
         "inc-cntc": "false",
-        "inc-regs": "false",
+        "inc-completed-programs": "true",
         "inc-dmgr": "false",
-        "inc-work": "false",
         "inc-dob": "false",
         "inc-gndr": "false",
-        "affiliation-status": "ACT",
-        "inc-completed-programs": "true",
+        "inc-regs": "false",
+        "inc-work": "false",
     }
     logger.debug(f"status for {identifier}")
     items = await sis.get_items(uri, params, headers, item_key)
@@ -48,7 +47,6 @@ async def get_academic_statuses(app_id, app_key, identifier, id_type):
 async def get_name(app_id, app_key, identifier, id_type, code="Preferred"):
     """Given a student identifier, return student names."""
     items = await get_student(app_id, app_key, identifier, id_type, "names")
-    names = []
     for item in items:
         if jmespath.search("type.description", item) != code:
             continue

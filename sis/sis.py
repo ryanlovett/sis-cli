@@ -29,7 +29,7 @@ async def get_items(url, params, headers, path):
                 raise Exception(f"HTTP error {retval}")
             try:
                 data = await r.json()
-            except aiohttp.client_exceptions.ContentTypeError as e:
+            except aiohttp.client_exceptions.ContentTypeError:
                 data = await r.read()
                 logger.error("Did not receive JSON.")
                 logger.error(data)

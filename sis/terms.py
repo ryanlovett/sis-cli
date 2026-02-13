@@ -16,6 +16,7 @@ async def get_term_name(app_id, app_key, term_id):
     """Given a term id, return the term's friendly name."""
     uri = f"{terms_uri}/{term_id}"
     headers = {"Accept": "application/json", "app_id": app_id, "app_key": app_key}
+    params = {}
     terms = await sis.get_items(uri, params, headers, "terms")
     if len(terms) == 0:  # if we are between terms
         return None

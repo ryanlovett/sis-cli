@@ -252,5 +252,4 @@ def filter_instructors(section, constituents, identifier):
         not is_primary and constituents == "gsis"
     ):
         return section_instructors(section, identifier)
-        logger.info(f"exact: uids {uids}")
     return set()

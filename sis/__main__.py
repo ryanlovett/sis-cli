@@ -21,7 +21,7 @@ import pathlib
 import pprint
 import sys
 
-from sis import sis, classes, course, enrollments, student, terms
+from sis import classes, course, enrollments, student, terms
 
 # We use f-strings from python >= 3.6.
 assert sys.version_info >= (3, 6)
