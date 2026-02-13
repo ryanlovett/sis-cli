@@ -88,7 +88,7 @@ async def get_instructors(
 ):
     """Given a term and class section number, return the instructor ids.
 
-    If return_raw is True, returns the raw sections data instead of extracted identifiers.
+    If return_raw is True, returns the instructor objects with all details instead of just extracted identifiers.
     role_filter can be:
     - "instructors": only professors/lecturers (role code PI)
     - "gsis": only GSIs/TAs (role code TNIC)
@@ -115,13 +115,70 @@ async def get_instructors(
     logger.info(f"num sections: {len(sections)}")
 
     if return_raw:
-        return sections
+        # Return full instructor objects instead of just IDs
+        instructors = []
+        for section in sections:
+            instructors.extend(section_instructor_objects(section, role_filter))
+        return instructors
 
     instructors = set()
     for section in sections:
         instructors |= section_instructors(section, identifier, role_filter)
 
     return instructors
+
+
+def filter_instructors_by_role(all_instructors, role_filter="staff"):
+    """Filter instructors by role code.
+
+    role_filter can be:
+    - "instructors": only professors/lecturers (role code PI)
+    - "gsis": only GSIs/TAs (role code TNIC)
+    - "staff": all teaching staff (excludes only APRX - administrative proxy)
+
+    Returns an iterator of filtered instructor objects.
+    """
+    # Map role_filter to (codes_to_include, codes_to_exclude)
+    # If codes_to_include is not None, only those codes are included
+    # Otherwise, codes_to_exclude are excluded
+    role_filter_map = {
+        "gsis": (["TNIC"], None),
+        "instructors": (["PI"], None),
+        "staff": (None, ["APRX"]),
+    }
+
+    codes_to_include, codes_to_exclude = role_filter_map.get(
+        role_filter, role_filter_map["staff"]
+    )
+
+    if codes_to_include is not None:
+        return filter(
+            lambda x: "role" in x and x["role"]["code"] in codes_to_include,
+            all_instructors,
+        )
+    else:
+        return filter(
+            lambda x: "role" in x and x["role"]["code"] not in codes_to_exclude,
+            all_instructors,
+        )
+
+
+def section_instructor_objects(section, role_filter="staff"):
+    """Extract full instructor objects from a section.
+
+    Returns a list of instructor objects with all details (identifiers, names, role, etc.)
+    role_filter can be:
+    - "instructors": only professors/lecturers (role code PI)
+    - "gsis": only GSIs/TAs (role code TNIC)
+    - "staff": all teaching staff (excludes only APRX - administrative proxy)
+    """
+    # get all instructors
+    all_instructors = jmespath.search("meetings[].assignedInstructors[]", section)
+    if all_instructors is None:
+        return []
+
+    filtered = filter_instructors_by_role(all_instructors, role_filter)
+    return list(filtered)
 
 
 def section_instructors(section, id_attr="campus-uid", role_filter="staff"):
@@ -137,22 +194,7 @@ def section_instructors(section, id_attr="campus-uid", role_filter="staff"):
     if all_instructors is None:
         return set()
 
-    # Filter by role
-    if role_filter == "gsis":
-        # Only include GSIs/TAs (TNIC = Teaching but Not In Charge)
-        filtered = filter(
-            lambda x: "role" in x and x["role"]["code"] == "TNIC", all_instructors
-        )
-    elif role_filter == "instructors":
-        # Only include primary instructors (PI = Teaching and In Charge)
-        filtered = filter(
-            lambda x: "role" in x and x["role"]["code"] == "PI", all_instructors
-        )
-    else:
-        # Staff: exclude only APRX (administrative proxy)
-        filtered = filter(
-            lambda x: "role" in x and x["role"]["code"] != "APRX", all_instructors
-        )
+    filtered = filter_instructors_by_role(all_instructors, role_filter)
 
     # handle email vs campus-uid vs name differently since they're stored in different places
     if id_attr == "email":
