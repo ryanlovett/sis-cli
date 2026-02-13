@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sis"
+version = "0.3"
+description = "Query the UC Berkeley SIS."
+readme = "README.md"
+authors = [
+    {name = "Ryan Lovett", email = "rylo@berkeley.edu"}
+]
+license = {text = "Apache-2.0"}
+requires-python = ">=3.6"
+dependencies = [
+    "aiohttp",
+    "jmespath"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/ryanlovett/sis"
+
+[project.scripts]
+sis = "sis.__main__:run"
+
+[tool.setuptools]
+packages = ["sis"]
