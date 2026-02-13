@@ -134,7 +134,7 @@ async def main():
         "-c",
         dest="constituents",
         default="enrolled",
-        choices=["enrolled", "waitlisted", "students", "instructors"],
+        choices=["enrolled", "waitlisted", "students", "instructors", "gsis", "staff"],
         type=str.lower,
         help="course constituents",
     )
@@ -373,7 +373,7 @@ async def main():
                 args.identifier,
                 return_raw=args.json,
             )
-        elif args.constituents == "instructors":
+        elif args.constituents in ["instructors", "gsis", "staff"]:
             data = await classes.get_instructors(
                 credentials["classes_id"],
                 credentials["classes_key"],
@@ -382,6 +382,7 @@ async def main():
                 include_secondary,
                 args.identifier,
                 return_raw=args.json,
+                role_filter=args.constituents,
             )
         if args.json:
             # Convert sets to lists for JSON serialization

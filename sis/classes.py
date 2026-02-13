@@ -84,10 +84,15 @@ async def get_instructors(
     include_secondary="false",
     identifier="campus-uid",
     return_raw=False,
+    role_filter="staff",
 ):
     """Given a term and class section number, return the instructor ids.
 
     If return_raw is True, returns the raw sections data instead of extracted identifiers.
+    role_filter can be:
+    - "instructors": only professors/lecturers (role code PI)
+    - "gsis": only GSIs/TAs (role code TNIC)
+    - "staff": all teaching staff (both instructors and GSIs)
     """
 
     # get the data for the specified sections
@@ -114,28 +119,47 @@ async def get_instructors(
 
     instructors = set()
     for section in sections:
-        instructors |= section_instructors(section, identifier)
+        instructors |= section_instructors(section, identifier, role_filter)
 
     return instructors
 
 
-def section_instructors(section, id_attr="campus-uid"):
-    """Extract disclosed identifiers of section instructors."""
+def section_instructors(section, id_attr="campus-uid", role_filter="staff"):
+    """Extract disclosed identifiers of section instructors.
+
+    role_filter can be:
+    - "instructors": only professors/lecturers (role code PI)
+    - "gsis": only GSIs/TAs (role code TNIC)
+    - "staff": all teaching staff (excludes only APRX - administrative proxy)
+    """
     # get all instructors
     all_instructors = jmespath.search("meetings[].assignedInstructors[]", section)
     if all_instructors is None:
         return set()
-    # exclude any who have a 'role' that is 'APRX' (administrative proxy).
-    primary = filter(
-        lambda x: "role" in x and x["role"]["code"] != "APRX", all_instructors
-    )
+
+    # Filter by role
+    if role_filter == "gsis":
+        # Only include GSIs/TAs (TNIC = Teaching but Not In Charge)
+        filtered = filter(
+            lambda x: "role" in x and x["role"]["code"] == "TNIC", all_instructors
+        )
+    elif role_filter == "instructors":
+        # Only include primary instructors (PI = Teaching and In Charge)
+        filtered = filter(
+            lambda x: "role" in x and x["role"]["code"] == "PI", all_instructors
+        )
+    else:
+        # Staff: exclude only APRX (administrative proxy)
+        filtered = filter(
+            lambda x: "role" in x and x["role"]["code"] != "APRX", all_instructors
+        )
 
     # handle email vs campus-uid vs name differently since they're stored in different places
     if id_attr == "email":
         # emails are in instructor.emails array, similar to student emails
         # first try campus email (CAMP), then other email (OTHR)
         ids = []
-        for instructor in list(primary):
+        for instructor in list(filtered):
             camp_email = jmespath.search(
                 "instructor.emails[?type.code=='CAMP'].emailAddress | [0]", instructor
             )
@@ -152,7 +176,7 @@ def section_instructors(section, id_attr="campus-uid"):
     elif id_attr == "name":
         # names are in instructor.names array - get the preferred or first formattedName
         ids = []
-        for instructor in list(primary):
+        for instructor in list(filtered):
             # Try to get preferred name first
             preferred_name = jmespath.search(
                 "instructor.names[?preferred].formattedName | [0]", instructor
@@ -171,7 +195,7 @@ def section_instructors(section, id_attr="campus-uid"):
         # search for disclosed identifiers of type campus-uid
         ids = jmespath.search(
             f"[].instructor.identifiers[?disclose && type=='{id_attr}'].id[]",
-            list(primary),
+            list(filtered),
         )
         if ids is None:
             return set()
