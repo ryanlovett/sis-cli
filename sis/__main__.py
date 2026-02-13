@@ -152,12 +152,6 @@ async def main():
         action="store_true",
         help="exclude data from sections with matching subject and code.",
     )
-    people_parser.add_argument(
-        "--json",
-        dest="json",
-        action="store_true",
-        help="output raw API response data as JSON",
-    )
 
     classes_parser = subparsers.add_parser("classes", help="Get classes.")
     classes_parser.add_argument(
@@ -211,12 +205,6 @@ async def main():
         dest="exact",
         action="store_true",
         help="exclude secondary sections (labs, discussions, etc.)",
-    )
-    section_parser.add_argument(
-        "--json",
-        dest="json",
-        action="store_true",
-        help="output raw section data as JSON (includes all sections if not --exact)",
     )
 
     students_parser = subparsers.add_parser(
