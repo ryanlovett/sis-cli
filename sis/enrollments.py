@@ -135,9 +135,18 @@ def status_code(constituents):
 
 
 async def get_students(
-    term_id, class_number, constituents, credentials, exact, identifier="campus-uid"
+    term_id,
+    class_number,
+    constituents,
+    credentials,
+    exact,
+    identifier="campus-uid",
+    return_raw=False,
 ):
-    """Given a term and class section number, return the student ids."""
+    """Given a term and class section number, return the student ids.
+
+    If return_raw is True, returns the raw enrollment data instead of extracted identifiers.
+    """
 
     if exact:
         # get all enrollments for this section
@@ -179,6 +188,9 @@ async def get_students(
         constituent_enrollments = filter_enrollment_status(
             enrollments, status_code(constituents)
         )
+
+    if return_raw:
+        return constituent_enrollments
 
     # function to extract an enrollment attribute
     if identifier == "campus-uid":

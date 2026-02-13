@@ -356,30 +356,36 @@ async def main():
             return
 
         include_secondary = "false" if args.exact else "true"
+        data = None
         if args.constituents in ["enrolled", "waitlisted", "students"]:
-            uids = await enrollments.get_students(
+            data = await enrollments.get_students(
                 term_id,
                 args.class_number,
                 args.constituents,
                 credentials,
                 include_secondary,
                 args.identifier,
+                return_raw=args.json,
             )
         elif args.constituents == "instructors":
-            uids = await classes.get_instructors(
+            data = await classes.get_instructors(
                 credentials["classes_id"],
                 credentials["classes_key"],
                 term_id,
                 args.class_number,
                 include_secondary,
                 args.identifier,
+                return_raw=args.json,
             )
         if args.json:
-            print(json.dumps(uids or [], indent=4))
+            # Convert sets to lists for JSON serialization
+            if isinstance(data, set):
+                data = list(data)
+            print(json.dumps(data or [], indent=4))
         else:
-            if uids:
-                for uid in uids:
-                    print(uid)
+            if data:
+                for item in data:
+                    print(item)
     elif args.command == "classes":
         if args.subject_area:
             if args.term_id:
@@ -453,7 +459,9 @@ async def main():
                     print(enrollments.section_display_name(section))
                 elif args.attribute == "is_primary":
                     print(
-                        {True: "1", False: "0"}[enrollments.section_display_name(section)]
+                        {True: "1", False: "0"}[
+                            enrollments.section_display_name(section)
+                        ]
                     )
     elif args.command == "student":
         if args.attribute == "plans":
