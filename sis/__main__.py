@@ -206,6 +206,18 @@ async def main():
         type=str.lower,
         help="attribute",
     )
+    section_parser.add_argument(
+        "--exact",
+        dest="exact",
+        action="store_true",
+        help="exclude secondary sections (labs, discussions, etc.)",
+    )
+    section_parser.add_argument(
+        "--json",
+        dest="json",
+        action="store_true",
+        help="output raw section data as JSON (includes all sections if not --exact)",
+    )
 
     students_parser = subparsers.add_parser(
         "student", help="Get information about a student."
@@ -442,12 +454,13 @@ async def main():
             # to get the term id
             return
 
+        include_secondary = "false" if args.exact else "true"
         sections = await classes.get_sections_by_id(
             credentials["classes_id"],
             credentials["classes_key"],
             term_id,
             args.class_number,
-            include_secondary="false",
+            include_secondary=include_secondary,
         )
         if args.attribute == "all":
             if args.json:
