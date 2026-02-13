@@ -25,5 +25,11 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/ryanlovett/sis"
 
+[project.optional-dependencies]
+dev = [
+    "pre-commit",
+    "black",
+]
+
 [project.scripts]
 sis = "sis.__main__:run"
