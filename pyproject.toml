@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "sis"
-version = "0.3"
+version = "0.3.1"
 description = "Query the UC Berkeley SIS."
 readme = "README.md"
 authors = [
