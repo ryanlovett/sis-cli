@@ -57,10 +57,7 @@ async def get_name(app_id, app_key, identifier, id_type, code="Preferred"):
 
 def get_academic_plans(status):
     logger.debug(f"status: {status}")
-    plans = status.get("studentPlans", [])
-    logger.debug(f"plans: {plans}")
-
-    return list(map(lambda x: x["academicPlan"]["plan"], plans))
+    return jmespath.search("studentPlans[?academicPlan].academicPlan.plan", status)
 
 
 async def get_emails(app_id, app_key, identifier, id_type="campus-id"):
