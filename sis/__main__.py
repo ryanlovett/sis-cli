@@ -180,6 +180,24 @@ async def main():
         help="class identifier. Required unless --json is specified, in which case"
         " all available class data is returned.",
     )
+    classes_parser.add_argument(
+        "-n",
+        dest="catalog_number",
+        default=None,
+        help='Catalog number. e.g. "C8" or "20"',
+    )
+    classes_parser.add_argument(
+        "-p",
+        dest="course_prefix",
+        default=None,
+        help='Course prefix. e.g. "C" in "C8"',
+    )
+    classes_parser.add_argument(
+        "-N",
+        dest="course_number",
+        default=None,
+        help='Course number. e.g. "8" in "C8"',
+    )
 
     section_parser = subparsers.add_parser(
         "section", help="Get information about a section."
@@ -436,6 +454,9 @@ async def main():
                     credentials["classes_key"],
                     term_id,
                     args.subject_area,
+                    catalog_number=args.catalog_number,
+                    course_prefix=args.course_prefix,
+                    course_number=args.course_number,
                     return_raw=True,
                 )
                 print(json.dumps(data or [], indent=4))
@@ -445,6 +466,9 @@ async def main():
                     credentials["classes_key"],
                     term_id,
                     args.subject_area,
+                    catalog_number=args.catalog_number,
+                    course_prefix=args.course_prefix,
+                    course_number=args.course_number,
                 )
                 if args.json:
                     print(json.dumps(course_ids or [], indent=4))
@@ -457,6 +481,7 @@ async def main():
                     credentials["enrollments_key"],
                     term_id,
                     args.subject_area,
+                    catalog_number=args.catalog_number,
                 )
                 if args.json:
                     print(json.dumps(course_ids or [], indent=4))

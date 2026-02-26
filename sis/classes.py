@@ -16,9 +16,20 @@ classes_sections_uri = "https://gateway.api.berkeley.edu/sis/v1/classes/sections
 
 
 async def get_classes_by_subject_area(
-    app_id, app_key, term_id, subject_area, return_raw=False
+    app_id,
+    app_key,
+    term_id,
+    subject_area,
+    catalog_number=None,
+    course_prefix=None,
+    course_number=None,
+    return_raw=False,
 ):
     """Given a term and subject area, return class data.
+
+    catalog_number is passed to the API directly (e.g. "C8" or "20").
+    course_prefix and course_number are applied as client-side filters on the
+    formatted catalog number (e.g. prefix "C" and number "8" both match "C8").
 
     If return_raw is True, returns the raw list of class objects from the API.
     Otherwise returns a sorted, deduplicated list of cs-course-id values.
@@ -28,13 +39,31 @@ async def get_classes_by_subject_area(
         "subject-area-code": subject_area,
         "term-id": term_id,
     }
+    if catalog_number:
+        params["catalog-number"] = catalog_number.upper()
     uri = classes_uri
     logger.debug(f"get_classes_by_subject_area: {uri} {params}")
-    classes = await sis.get_items(uri, params, headers, "classes")
+    results = await sis.get_items(uri, params, headers, "classes")
+
+    # client-side filters for prefix and number components of the catalog number
+    if course_prefix is not None:
+        results = [
+            c
+            for c in results
+            if jmespath.search("course.catalogNumber.prefix", c)
+            == course_prefix.upper()
+        ]
+    if course_number is not None:
+        results = [
+            c
+            for c in results
+            if jmespath.search("course.catalogNumber.number", c) == course_number
+        ]
+
     if return_raw:
-        return classes
+        return results
     course_ids = jmespath.search(
-        "[].course.identifiers[?type=='cs-course-id'].id[]", classes
+        "[].course.identifiers[?type=='cs-course-id'].id[]", results
     )
     return sorted(list(set(course_ids)))
 
