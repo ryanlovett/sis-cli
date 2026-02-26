@@ -157,7 +157,21 @@ async def main():
     classes_parser.add_argument(
         "-s", dest="subject_area", help='Subject area. e.g. "STAT"'
     )
-    classes_parser.add_argument("-t", dest="term_id", help="Term ID")
+    classes_term_group = classes_parser.add_mutually_exclusive_group()
+    classes_term_group.add_argument(
+        "-t",
+        dest="sis_term_id",
+        type=valid_term,
+        help="SIS term id or position, e.g. 2192. Default: the current term.",
+    )
+    classes_term_group.add_argument("-y", dest="year", help="course year, e.g. 2019")
+    classes_parser.add_argument(
+        "-S",
+        dest="semester",
+        choices=["spring", "summer", "fall"],
+        type=str.lower,
+        help="semester",
+    )
     classes_parser.add_argument(
         "-i",
         dest="identifier",
@@ -395,13 +409,25 @@ async def main():
                     print(item)
     elif args.command == "classes":
         if args.subject_area:
-            if args.term_id:
-                term_id = args.term_id
+            if args.year:
+                term_id = await terms.get_term_id_from_year_sem(
+                    credentials["terms_id"],
+                    credentials["terms_key"],
+                    args.year,
+                    args.semester,
+                )
+            elif args.sis_term_id:
+                term_id = args.sis_term_id
             else:
+                # default is position='Current'
                 term_id = await terms.get_term_id(
                     credentials["terms_id"],
                     credentials["terms_key"],
                 )
+
+            if not term_id:  # e.g. we are between semesters
+                return
+
             if args.identifier == "cs-course-id":
                 course_ids = await classes.get_classes_by_subject_area(
                     credentials["classes_id"],
