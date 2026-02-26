@@ -15,8 +15,14 @@ classes_uri = "https://gateway.api.berkeley.edu/sis/v1/classes"
 classes_sections_uri = "https://gateway.api.berkeley.edu/sis/v1/classes/sections"
 
 
-async def get_classes_by_subject_area(app_id, app_key, term_id, subject_area):
-    """Given a term and subject area, return class data."""
+async def get_classes_by_subject_area(
+    app_id, app_key, term_id, subject_area, return_raw=False
+):
+    """Given a term and subject area, return class data.
+
+    If return_raw is True, returns the raw list of class objects from the API.
+    Otherwise returns a sorted, deduplicated list of cs-course-id values.
+    """
     headers = {"Accept": "application/json", "app_id": app_id, "app_key": app_key}
     params = {
         "subject-area-code": subject_area,
@@ -25,6 +31,8 @@ async def get_classes_by_subject_area(app_id, app_key, term_id, subject_area):
     uri = classes_uri
     logger.debug(f"get_classes_by_subject_area: {uri} {params}")
     classes = await sis.get_items(uri, params, headers, "classes")
+    if return_raw:
+        return classes
     course_ids = jmespath.search(
         "[].course.identifiers[?type=='cs-course-id'].id[]", classes
     )

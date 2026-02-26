@@ -175,10 +175,10 @@ async def main():
     classes_parser.add_argument(
         "-i",
         dest="identifier",
-        required=True,
         choices=["cs-course-id", "class-number"],
         type=str.lower,
-        help="class identifier",
+        help="class identifier. Required unless --json is specified, in which case"
+        " all available class data is returned.",
     )
 
     section_parser = subparsers.add_parser(
@@ -428,13 +428,29 @@ async def main():
             if not term_id:  # e.g. we are between semesters
                 return
 
-            if args.identifier == "cs-course-id":
+            if not args.identifier:
+                if not args.json:
+                    classes_parser.error("-i is required unless --json is specified")
+                data = await classes.get_classes_by_subject_area(
+                    credentials["classes_id"],
+                    credentials["classes_key"],
+                    term_id,
+                    args.subject_area,
+                    return_raw=True,
+                )
+                print(json.dumps(data or [], indent=4))
+            elif args.identifier == "cs-course-id":
                 course_ids = await classes.get_classes_by_subject_area(
                     credentials["classes_id"],
                     credentials["classes_key"],
                     term_id,
                     args.subject_area,
                 )
+                if args.json:
+                    print(json.dumps(course_ids or [], indent=4))
+                else:
+                    for course_id in course_ids:
+                        print(course_id)
             elif args.identifier == "class-number":
                 course_ids = await enrollments.get_lecture_section_ids(
                     credentials["enrollments_id"],
@@ -442,11 +458,11 @@ async def main():
                     term_id,
                     args.subject_area,
                 )
-            if args.json:
-                print(json.dumps(course_ids or [], indent=4))
-            else:
-                for course_id in course_ids:
-                    print(course_id)
+                if args.json:
+                    print(json.dumps(course_ids or [], indent=4))
+                else:
+                    for course_id in course_ids:
+                        print(course_id)
     elif args.command == "section":
         if args.year:
             term_id = await terms.get_term_id_from_year_sem(
