@@ -21,6 +21,8 @@ import pathlib
 import pprint
 import sys
 
+import jmespath
+
 from sis import classes, course, enrollments, student, terms
 
 # We use f-strings from python >= 3.6.
@@ -123,12 +125,35 @@ async def main():
         type=str.lower,
         help="semester",
     )
-    people_parser.add_argument(
+    people_course_group = people_parser.add_mutually_exclusive_group(required=True)
+    people_course_group.add_argument(
         "-n",
         dest="class_number",
-        required=True,
         type=int,
         help="class section number, e.g. 14720",
+    )
+    people_course_group.add_argument(
+        "-D",
+        dest="subject_area",
+        help='Subject area, e.g. "STAT". Use with -C/-p/-N to identify a course.',
+    )
+    people_parser.add_argument(
+        "-C",
+        dest="catalog_number",
+        default=None,
+        help='Catalog number, e.g. "20" or "C8". Used with -D.',
+    )
+    people_parser.add_argument(
+        "-p",
+        dest="course_prefix",
+        default=None,
+        help='Course prefix, e.g. "C" in "C8". Used with -D.',
+    )
+    people_parser.add_argument(
+        "-N",
+        dest="course_number",
+        default=None,
+        help='Course number, e.g. "8" in "C8". Used with -D.',
     )
     people_parser.add_argument(
         "-c",
@@ -395,27 +420,125 @@ async def main():
 
         include_secondary = "false" if args.exact else "true"
         data = None
-        if args.constituents in ["enrolled", "waitlisted", "students"]:
-            data = await enrollments.get_students(
-                term_id,
-                args.class_number,
-                args.constituents,
-                credentials,
-                include_secondary,
-                args.identifier,
-                return_raw=args.json,
-            )
-        elif args.constituents in ["instructors", "gsis", "staff"]:
-            data = await classes.get_instructors(
-                credentials["classes_id"],
-                credentials["classes_key"],
-                term_id,
-                args.class_number,
-                include_secondary,
-                args.identifier,
-                return_raw=args.json,
-                role_filter=args.constituents,
-            )
+        if args.subject_area:
+            # If prefix or number filters are given, use the Classes API to resolve
+            # the matching catalog numbers first, then look up lecture section IDs
+            # for each. Otherwise pass catalog_number directly to the descriptors
+            # endpoint.
+            if args.course_prefix or args.course_number:
+                raw_classes = await classes.get_classes_by_subject_area(
+                    credentials["classes_id"],
+                    credentials["classes_key"],
+                    term_id,
+                    args.subject_area,
+                    catalog_number=args.catalog_number,
+                    course_prefix=args.course_prefix,
+                    course_number=args.course_number,
+                    return_raw=True,
+                )
+                catalog_numbers = list(
+                    set(
+                        jmespath.search(
+                            "[].course.catalogNumber.formatted", raw_classes
+                        )
+                        or []
+                    )
+                )
+                lecture_ids = []
+                for cn in catalog_numbers:
+                    lecture_ids += await enrollments.get_lecture_section_ids(
+                        credentials["enrollments_id"],
+                        credentials["enrollments_key"],
+                        term_id,
+                        args.subject_area,
+                        catalog_number=cn,
+                    )
+            else:
+                lecture_ids = await enrollments.get_lecture_section_ids(
+                    credentials["enrollments_id"],
+                    credentials["enrollments_key"],
+                    term_id,
+                    args.subject_area,
+                    catalog_number=args.catalog_number,
+                )
+            if args.constituents in ["enrolled", "waitlisted", "students"]:
+                all_enrollments = []
+                for section_id in lecture_ids:
+                    section_enrollments = await enrollments.get_section_enrollments(
+                        credentials["enrollments_id"],
+                        credentials["enrollments_key"],
+                        term_id,
+                        section_id,
+                    )
+                    all_enrollments += section_enrollments
+                if args.constituents != "students":
+                    all_enrollments = enrollments.filter_enrollment_status(
+                        all_enrollments, enrollments.status_code(args.constituents)
+                    )
+                if args.json:
+                    data = all_enrollments
+                else:
+                    if args.identifier == "campus-uid":
+                        data = set(
+                            map(enrollments.enrollment_campus_uid, all_enrollments)
+                        )
+                    elif args.identifier == "email":
+                        data = set(
+                            map(enrollments.enrollment_campus_email, all_enrollments)
+                        )
+                    else:
+                        data = set(map(enrollments.enrollment_name, all_enrollments))
+            elif args.constituents in ["instructors", "gsis", "staff"]:
+                if args.json:
+                    all_instructors_list = []
+                    for section_id in lecture_ids:
+                        all_instructors_list += await classes.get_instructors(
+                            credentials["classes_id"],
+                            credentials["classes_key"],
+                            term_id,
+                            section_id,
+                            include_secondary,
+                            args.identifier,
+                            return_raw=True,
+                            role_filter=args.constituents,
+                        )
+                    data = all_instructors_list
+                else:
+                    all_instructors_set = set()
+                    for section_id in lecture_ids:
+                        all_instructors_set |= await classes.get_instructors(
+                            credentials["classes_id"],
+                            credentials["classes_key"],
+                            term_id,
+                            section_id,
+                            include_secondary,
+                            args.identifier,
+                            return_raw=False,
+                            role_filter=args.constituents,
+                        )
+                    data = all_instructors_set
+        elif args.class_number:
+            if args.constituents in ["enrolled", "waitlisted", "students"]:
+                data = await enrollments.get_students(
+                    term_id,
+                    args.class_number,
+                    args.constituents,
+                    credentials,
+                    include_secondary,
+                    args.identifier,
+                    return_raw=args.json,
+                )
+            elif args.constituents in ["instructors", "gsis", "staff"]:
+                data = await classes.get_instructors(
+                    credentials["classes_id"],
+                    credentials["classes_key"],
+                    term_id,
+                    args.class_number,
+                    include_secondary,
+                    args.identifier,
+                    return_raw=args.json,
+                    role_filter=args.constituents,
+                )
         if args.json:
             # Convert sets to lists for JSON serialization
             if isinstance(data, set):
