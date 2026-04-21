@@ -51,22 +51,28 @@ def has_all_keys(d, keys):
     return all(k in d for k in keys)
 
 
-def read_json_data(filename, required_keys):
-    """Read and validate data from a json file."""
+def read_json_data(filename):
+    """Read data from a json file if it exists."""
     if not os.path.exists(filename):
-        raise Exception(f"No such file: {filename}")
-    data = json.loads(open(filename).read())
-    # check that we've got all of our required keys
-    if not has_all_keys(data, required_keys):
-        missing = set(required_keys) - set(data.keys())
-        s = f"Missing parameters in {filename}: {missing}"
-        raise Exception(s)
-    return data
+        return {}
+    return json.loads(open(filename).read())
 
 
 def read_credentials(filename, required_keys=secret_keys):
-    """Read credentials from {filename}. Returns a dict."""
-    return read_json_data(filename, required_keys)
+    """Read credentials from {filename} or environment. Returns a dict."""
+    data = read_json_data(filename)
+
+    for key in required_keys:
+        env_key = f"SIS_{key.upper()}"
+        if env_key in os.environ:
+            data[key] = os.environ[env_key]
+
+    if not has_all_keys(data, required_keys):
+        missing = set(required_keys) - set(data.keys())
+        s = f"Missing parameters in {filename} or environment: {missing}"
+        raise Exception(s)
+
+    return data
 
 
 def credentials_file():
