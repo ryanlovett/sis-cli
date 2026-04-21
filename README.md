@@ -203,6 +203,13 @@ Supply the credentials in a JSON file of the form:
 }
 ```
 
+Alternatively, you can provide the credentials via environment variables. Environment variables take precedence over the JSON file. The supported environment variables are:
+- `SIS_CLASSES_ID`, `SIS_CLASSES_KEY`
+- `SIS_COURSE_ID`, `SIS_COURSE_KEY`
+- `SIS_ENROLLMENTS_ID`, `SIS_ENROLLMENTS_KEY`
+- `SIS_STUDENTS_ID`, `SIS_STUDENTS_KEY`
+- `SIS_TERMS_ID`, `SIS_TERMS_KEY`
+
 Installation
 ------------
 Install in editable mode for development:
