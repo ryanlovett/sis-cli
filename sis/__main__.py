@@ -295,6 +295,102 @@ async def main():
         help="attribute",
     )
 
+    students_parser = subparsers.add_parser(
+        "students", help="Get students by academic plan code(s)."
+    )
+    students_parser.add_argument(
+        "-p",
+        "--plan-code",
+        dest="plan_code",
+        required=True,
+        action="append",
+        help="Academic plan code (repeatable), e.g. 00891PHDG",
+    )
+    students_parser.add_argument(
+        "-a",
+        dest="attribute",
+        default="campus-uid",
+        choices=["campus-uid", "student-id", "name", "email", "json"],
+        type=str.lower,
+        help="Output attribute (default: campus-uid)",
+    )
+    students_parser.add_argument(
+        "-s",
+        dest="semester",
+        choices=["spring", "summer", "fall"],
+        type=str.lower,
+        help="semester",
+    )
+    students_parser.add_argument(
+        "-y",
+        dest="year",
+        help="course year, e.g. 2019",
+    )
+    students_parser.add_argument(
+        "-t",
+        dest="sis_term_id",
+        type=valid_term,
+        help="SIS term id or position, e.g. 2192",
+    )
+    students_parser.add_argument(
+        "--affiliation-status",
+        dest="affiliation_status",
+        default="ACT",
+        choices=["ACT", "INA", "ALL"],
+        type=str.upper,
+        help="Affiliation status filter (default: ACT)",
+    )
+    students_parser.add_argument(
+        "--inc-acad",
+        dest="inc_acad",
+        action="store_true",
+        help="Include academic status data (plans, career, degrees)",
+    )
+    students_parser.add_argument(
+        "--inc-completed-programs",
+        dest="inc_completed_programs",
+        action="store_true",
+        help="Include completed programs",
+    )
+
+    student_list_parser = subparsers.add_parser(
+        "student-list", help="Get students by a list of IDs."
+    )
+    student_list_parser.add_argument(
+        "-i",
+        dest="id_list",
+        required=True,
+        help="Comma-separated list of IDs (max 100)",
+    )
+    student_list_parser.add_argument(
+        "-t",
+        dest="id_type",
+        default="student-id",
+        choices=["campus-uid", "student-id"],
+        type=str.lower,
+        help="ID type (default: student-id)",
+    )
+    student_list_parser.add_argument(
+        "-a",
+        dest="attribute",
+        default="campus-uid",
+        choices=["campus-uid", "student-id", "name", "email", "json"],
+        type=str.lower,
+        help="Output attribute (default: campus-uid)",
+    )
+    student_list_parser.add_argument(
+        "--inc-acad",
+        dest="inc_acad",
+        action="store_true",
+        help="Include academic status data (plans, career, degrees)",
+    )
+    student_list_parser.add_argument(
+        "--inc-completed-programs",
+        dest="inc_completed_programs",
+        action="store_true",
+        help="Include completed programs",
+    )
+
     course_parser = subparsers.add_parser("course", help="Get courses.")
     course_parser.add_argument(
         "-j", dest="json", action="store_true", help="Return JSON"
@@ -708,6 +804,89 @@ async def main():
                 print(json.dumps(name, indent=4))
             else:
                 print(name)
+    elif args.command == "students":
+        # Resolve term id if year/semester or explicit term_id provided
+        if args.year and args.semester:
+            term_id = await terms.get_term_id_from_year_sem(
+                credentials["terms_id"],
+                credentials["terms_key"],
+                args.year,
+                args.semester,
+            )
+        elif args.sis_term_id:
+            term_id = args.sis_term_id
+        else:
+            term_id = None
+
+        # For JSON mode, always include academic data so plans are present
+        inc_acad = args.inc_acad or (args.attribute == "json")
+        inc_cntc = args.attribute == "email"
+
+        # Collect students for each plan code
+        all_students = []
+        for plan_code in args.plan_code:
+            plan_students = await student.get_students_by_plan_code(
+                credentials["students_id"],
+                credentials["students_key"],
+                plan_code,
+                affiliation_status=args.affiliation_status,
+                inc_acad=inc_acad,
+                inc_completed_programs=args.inc_completed_programs,
+                inc_cntc=inc_cntc,
+                term_id=term_id,
+            )
+            all_students.extend(plan_students)
+
+        # Deduplicate by campus-uid (first occurrence wins)
+        deduped = student.deduplicate_students(all_students)
+
+        # Output based on attribute
+        if args.attribute == "json":
+            print(json.dumps(deduped, indent=4))
+        else:
+            for s in deduped:
+                if args.attribute == "campus-uid":
+                    val = student.extract_campus_uid(s)
+                elif args.attribute == "student-id":
+                    val = student.extract_student_id(s)
+                elif args.attribute == "name":
+                    val = student.extract_name(s)
+                elif args.attribute == "email":
+                    val = student.extract_email(s)
+                else:
+                    continue
+                if val:
+                    print(val)
+    elif args.command == "student-list":
+        students_list = await student.get_students_by_id_list(
+            credentials["students_id"],
+            credentials["students_key"],
+            args.id_list,
+            id_type=args.id_type,
+            inc_acad=args.inc_acad or (args.attribute == "json"),
+            inc_completed_programs=args.inc_completed_programs,
+        )
+
+        # Deduplicate
+        deduped = student.deduplicate_students(students_list)
+
+        # Output based on attribute
+        if args.attribute == "json":
+            print(json.dumps(deduped, indent=4))
+        else:
+            for s in deduped:
+                if args.attribute == "campus-uid":
+                    val = student.extract_campus_uid(s)
+                elif args.attribute == "student-id":
+                    val = student.extract_student_id(s)
+                elif args.attribute == "name":
+                    val = student.extract_name(s)
+                elif args.attribute == "email":
+                    val = student.extract_email(s)
+                else:
+                    continue
+                if val:
+                    print(val)
     elif args.command == "course":
         params = {}
         for a in [
