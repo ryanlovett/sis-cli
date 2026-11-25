@@ -41,7 +41,7 @@ async def get_student_enrollments(
     enrollments = await sis.get_items(
         uri, params, headers, "enrollmentsByStudent.studentEnrollments"
     )
-    logger.info(f"{enrollments=}")
+    # Full records include personal data (instructor names, emails, IDs).
     logger.debug(f"enrollments: {enrollments}")
     if course_attr == "course-id":
         flt = "[].classSection.class.course.identifiers[?type == `cs-course-id`].id[]"
